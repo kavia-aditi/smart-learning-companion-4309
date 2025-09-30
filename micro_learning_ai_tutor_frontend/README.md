@@ -46,6 +46,18 @@ if (logged) {
 }
 ```
 
+## Running tests
+
+- Ensure Flutter SDK is available.
+- From micro_learning_ai_tutor_frontend directory:
+  flutter test --concurrency=1
+
+Notes:
+- Tests use http/testing MockClient to simulate the Node backend for:
+  - POST /api/v1/register
+  - GET /api/v1/lessons
+- No external services are started and tests run in CI-friendly, non-interactive mode.
+
 ## Notes
 - Do not hardcode URLs. Prefer --dart-define at build time.
 - SharedPreferences key 'auth_token' is reused for bearer auth if the Node backend also issues JWT on login later.
