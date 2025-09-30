@@ -1,0 +1,4 @@
+#!/bin/bash
+cd /home/kavia/workspace/code-generation/smart-learning-companion-4309/micro_learning_ai_tutor_frontend
+flutter analyze
+
