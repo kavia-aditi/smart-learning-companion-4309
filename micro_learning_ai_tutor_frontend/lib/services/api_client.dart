@@ -5,10 +5,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// PUBLIC_INTERFACE
 class ApiClient {
-  /// Simple API client for the Micro-Learning backend.
+  /// Simple API client for the existing FastAPI backend (legacy in this repo).
+  ///
+  /// Configuration:
+  /// - Reads base from dart-define 'FASTAPI_BASE_URL' first.
+  /// - Falls back to 'API_BASE_URL' used previously in this repo.
+  /// - Defaults to 'http://localhost:8080/api/v1'.
   ApiClient({http.Client? client, String? baseUrl})
       : _client = client ?? http.Client(),
-        _baseUrl = baseUrl ?? const String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:8080/api/v1');
+        _baseUrl = baseUrl ??
+            const String.fromEnvironment('FASTAPI_BASE_URL', defaultValue: '')
+                .ifEmpty(const String.fromEnvironment('API_BASE_URL', defaultValue: ''))
+                .ifEmpty('http://localhost:8080/api/v1');
 
   final http.Client _client;
   final String _baseUrl;
@@ -65,4 +73,9 @@ class ApiClient {
     }
     return [];
   }
+}
+
+/// Helper to provide fallback logic for const String.fromEnvironment values.
+extension _IfEmpty on String {
+  String ifEmpty(String fallback) => isEmpty ? fallback : this;
 }

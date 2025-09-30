@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'services/api_client.dart';
+import 'services/api_service.dart';
 
 // PUBLIC_INTERFACE
 void main() {
@@ -448,12 +449,94 @@ class _InputPill extends StatelessWidget {
 
 // Placeholder screens for other tabs. Keep simple but themed.
 
-class LessonsPlaceholderScreen extends StatelessWidget {
+class LessonsPlaceholderScreen extends StatefulWidget {
   const LessonsPlaceholderScreen({super.key});
 
   @override
+  State<LessonsPlaceholderScreen> createState() => _LessonsPlaceholderScreenState();
+}
+
+class _LessonsPlaceholderScreenState extends State<LessonsPlaceholderScreen> {
+  bool _loading = true;
+  String _error = '';
+  List<dynamic> _lessons = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLessons();
+  }
+
+  Future<void> _loadLessons() async {
+    try {
+      // Example usage of ApiService (Node.js backend):
+      // Set base URL with:
+      // flutter run --dart-define=NODE_API_BASE_URL=http://localhost:3000
+      final svc = ApiService();
+      final lessons = await svc.fetchLessons();
+      setState(() {
+        _lessons = lessons;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to load lessons';
+        _loading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const _CenteredPlaceholder(title: 'Lessons', subtitle: 'Browse micro-lessons by topic.');
+    if (_loading) {
+      return const _CenteredPlaceholder(title: 'Lessons', subtitle: 'Loading lessons...');
+    }
+    if (_error.isNotEmpty) {
+      return _CenteredPlaceholder(title: 'Lessons', subtitle: _error);
+    }
+    if (_lessons.isEmpty) {
+      return const _CenteredPlaceholder(title: 'Lessons', subtitle: 'No lessons available yet.');
+    }
+
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: _lessons.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          final item = _lessons[index] as Map<String, dynamic>? ?? {};
+          final title = (item['title'] ?? 'Untitled').toString();
+          final summary = (item['summary'] ?? '').toString();
+          return Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(10),
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.titleMedium),
+                const SizedBox(height: 6),
+                Text(
+                  summary.isEmpty ? 'Tap to open lesson.' : summary,
+                  style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF666A70)),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 }
 
