@@ -20,13 +20,13 @@ class AiTutorApp extends StatelessWidget {
     const Color bgCanvas = Color(0xFFF9FAFB); // background
     const Color surface = Color(0xFFFFFFFF); // surface
     const Color textPrimary = Color(0xFF111827);
-    const Color textSecondary = Color(0xFF666A70);
+
     const Color textMuted = Color(0xFF8A8F96);
     const Color border = Color(0xFFE5E7EB);
     const Color divider = Color(0xFFECECEC);
     const Color chipBg = Color(0xFFF7F7F8);
     const Color chipText = Color(0xFF1F2937);
-    const Color avatarBg = Color(0xFFDDEBFF);
+
 
     final ThemeData base = ThemeData(
       useMaterial3: true,
