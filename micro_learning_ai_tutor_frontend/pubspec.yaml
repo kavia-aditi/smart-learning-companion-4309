@@ -1,5 +1,5 @@
 name: micro_learning_ai_tutor_frontend
-description: "A new Flutter project."
+description: "Micro-Learning AI Tutor mobile app (Ocean Professional theme) with home/dashboard, tabs, and card-based UI."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
