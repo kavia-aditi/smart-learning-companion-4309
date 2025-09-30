@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'services/api_client.dart';
 
 // PUBLIC_INTERFACE
 void main() {
@@ -156,11 +157,48 @@ class _AppShellState extends State<AppShell> {
 }
 
 /// PUBLIC_INTERFACE
-class HomeDashboardScreen extends StatelessWidget {
+class HomeDashboardScreen extends StatefulWidget {
   /// Home/dashboard UI inspired by the provided screenshot and notes.
   const HomeDashboardScreen({super.key});
 
   static const double _maxContentWidth = 560; // For tablet responsiveness.
+
+  @override
+  State<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
+}
+
+class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
+  int _projectsCount = 0;
+  bool _initialized = false;
+
+  // Fetch data without using context after await; only set primitive state.
+  Future<void> _bootstrap() async {
+    try {
+      final client = ApiClient();
+      // Try login with a demo account; if not exists, register then login.
+      final ok = await client.login(email: 'demo@example.com', password: 'demo1234');
+      if (!ok) {
+        await client.register(email: 'demo@example.com', name: 'Demo User', password: 'demo1234');
+        await client.login(email: 'demo@example.com', password: 'demo1234');
+      }
+      final projects = await client.listProjects();
+      setState(() {
+        _projectsCount = projects.length;
+        _initialized = true;
+      });
+    } catch (_) {
+      setState(() {
+        _initialized = true;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Kick off bootstrap
+    _bootstrap();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +211,7 @@ class HomeDashboardScreen extends StatelessWidget {
         return Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+            constraints: const BoxConstraints(maxWidth: HomeDashboardScreen._maxContentWidth),
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
               child: Column(
@@ -190,7 +228,9 @@ class HomeDashboardScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Learn any topic in 5-minute lessons',
+                    _initialized
+                        ? 'Learn any topic in 5-minute lessons · Projects: $_projectsCount'
+                        : 'Learn any topic in 5-minute lessons',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF666A70),
                       fontWeight: FontWeight.w500,
