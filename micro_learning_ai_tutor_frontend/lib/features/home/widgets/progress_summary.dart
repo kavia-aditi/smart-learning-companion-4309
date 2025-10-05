@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/state/app_state.dart';
+import '../../../app.dart' show kReduceMotion;
 
 /// PUBLIC_INTERFACE
 class ProgressSummary extends StatelessWidget {
@@ -16,6 +17,8 @@ class ProgressSummary extends StatelessWidget {
       return (sum / s.lessonProgress.length).round();
     });
 
+    final progressValue = (avg.clamp(0, 100)) / 100.0;
+
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -26,7 +29,29 @@ class ProgressSummary extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Icon(Icons.insights, color: theme.colorScheme.primary),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 44,
+                height: 44,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: progressValue),
+                  duration: kReduceMotion ? Duration.zero : const Duration(milliseconds: 500),
+                  curve: Curves.easeOut,
+                  builder: (context, value, _) {
+                    return CircularProgressIndicator(
+                      value: value,
+                      strokeWidth: 6,
+                      backgroundColor: const Color(0xFFE6EAF2),
+                      color: theme.colorScheme.primary,
+                    );
+                  },
+                ),
+              ),
+              const Icon(Icons.insights, size: 20),
+            ],
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

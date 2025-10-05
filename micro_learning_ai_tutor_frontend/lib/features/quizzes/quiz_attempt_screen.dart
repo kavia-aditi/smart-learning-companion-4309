@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/models/quiz.dart';
 import '../../core/state/app_state.dart';
+import '../../app.dart' show kReduceMotion;
 
 /// PUBLIC_INTERFACE
 class QuizAttemptScreen extends StatefulWidget {
@@ -64,28 +65,34 @@ class _QuizAttemptScreenState extends State<QuizAttemptScreen> {
       appBar: AppBar(title: Text(widget.quiz.title)),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Question ${_index + 1} of ${widget.quiz.questions.length}', style: theme.textTheme.bodySmall),
-            const SizedBox(height: 8),
-            Text(q.prompt, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            ...List.generate(q.options.length, (i) {
-              final opt = q.options[i];
-              return RadioListTile<int>(
-                value: i,
-                groupValue: _selected,
-                onChanged: (val) => setState(() => _selected = val),
-                title: Text(opt),
-              );
-            }),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: _selected == null ? null : _submit,
-              child: const Text('Submit answer'),
-            ),
-          ],
+        child: AnimatedSwitcher(
+          duration: kReduceMotion ? Duration.zero : const Duration(milliseconds: 250),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          child: Column(
+            key: ValueKey('q-$_index'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Question ${_index + 1} of ${widget.quiz.questions.length}', style: theme.textTheme.bodySmall),
+              const SizedBox(height: 8),
+              Text(q.prompt, style: theme.textTheme.titleMedium),
+              const SizedBox(height: 12),
+              ...List.generate(q.options.length, (i) {
+                final opt = q.options[i];
+                return RadioListTile<int>(
+                  value: i,
+                  groupValue: _selected,
+                  onChanged: (val) => setState(() => _selected = val),
+                  title: Text(opt),
+                );
+              }),
+              const Spacer(),
+              ElevatedButton(
+                onPressed: _selected == null ? null : _submit,
+                child: const Text('Submit answer'),
+              ),
+            ],
+          ),
         ),
       ),
     );

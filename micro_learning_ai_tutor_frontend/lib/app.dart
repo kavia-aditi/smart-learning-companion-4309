@@ -8,6 +8,9 @@ import 'features/learn/learn_screen.dart';
 import 'features/quizzes/quizzes_screen.dart';
 import 'features/profile/profile_screen.dart';
 
+/// Toggle to reduce motion for accessibility and tests.
+const bool kReduceMotion = false;
+
 /// PUBLIC_INTERFACE
 class MicroLearningApp extends StatefulWidget {
   /// Root application widget configuring theme and navigation shell.
@@ -38,8 +41,29 @@ class _MicroLearningAppState extends State<MicroLearningApp> {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.theme(),
         home: Scaffold(
+          appBar: AppBar(
+            title: const Text('Micro-Learning'),
+            flexibleSpace: Container(
+              decoration: BoxDecoration(gradient: AppTheme.headerGradient(Theme.of(context).colorScheme)),
+            ),
+          ),
           body: SafeArea(
-            child: IndexedStack(index: _currentIndex, children: _pages),
+            child: AnimatedSwitcher(
+              duration: kReduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, anim) {
+                if (kReduceMotion) return child;
+                final slide = Tween<Offset>(begin: const Offset(0.03, 0), end: Offset.zero).animate(anim);
+                final fade = CurvedAnimation(parent: anim, curve: Curves.easeOut);
+                return SlideTransition(position: slide, child: FadeTransition(opacity: fade, child: child));
+              },
+              child: KeyedSubtree(
+                // Unique key per tab to trigger AnimatedSwitcher transitions
+                key: ValueKey<int>(_currentIndex),
+                child: _pages[_currentIndex],
+              ),
+            ),
           ),
           bottomNavigationBar: NavigationBar(
             selectedIndex: _currentIndex,

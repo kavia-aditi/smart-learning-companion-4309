@@ -25,7 +25,7 @@ Notes:
 
 ## Architecture
 
-- Theme: lib/theme/app_theme.dart (Ocean Professional colors and components)
+- Theme: lib/theme/app_theme.dart (Ocean Professional colors, typography, components)
 - State: Provider + ChangeNotifier (lib/core/state/app_state.dart) with in-memory lesson progress and quiz scores
 - Models: lib/core/models/lesson.dart, lib/core/models/quiz.dart
 - Services: Stubbed services with mock data and future API shapes
@@ -40,6 +40,27 @@ Notes:
   - Learn: lib/features/learn/*
   - Quizzes: lib/features/quizzes/*
   - Profile: lib/features/profile/*
+- Widgets:
+  - Shimmer skeletons: lib/widgets/shimmer_box.dart
+
+## UI polish & animations
+
+- Theme refinements: consistent spacing (8/12/16/24), rounded corners (12–16), subtle elevations, gradient headers.
+- Animations:
+  - Tab transitions use AnimatedSwitcher for smooth cross-fades and slight slides.
+  - Lists/cards animate on appearance (fade+translate) and have press feedback (tiny scale change).
+  - Hero transition between lesson title in list/card and Lesson Detail app bar.
+  - Quiz attempt area switches with AnimatedSwitcher.
+  - Shimmer placeholders during loading states (Home/Learn/Quizzes).
+- Accessibility:
+  - Minimum tap sizes for buttons and controls.
+  - Reduced motion support via kReduceMotion flag.
+
+Toggle reduced motion:
+- Open lib/app.dart and set:
+  const bool kReduceMotion = true;
+
+This disables most animations and is useful for CI or users who prefer reduced motion.
 
 ## Backend Integration (optional)
 

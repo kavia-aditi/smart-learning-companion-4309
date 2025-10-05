@@ -28,16 +28,23 @@ class ProfileScreen extends StatelessWidget {
           value: true,
           onChanged: (_) {},
         ),
-        ListTile(
-          title: const Text('Theme'),
-          subtitle: const Text('Ocean Professional'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () {},
-        ),
-        ListTile(
-          title: const Text('About'),
-          trailing: const Icon(Icons.info_outline),
-          onTap: () {},
+        Card(
+          child: Column(
+            children: [
+              ListTile(
+                title: const Text('Theme'),
+                subtitle: const Text('Ocean Professional'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {},
+              ),
+              const Divider(height: 1),
+              ListTile(
+                title: const Text('About'),
+                trailing: const Icon(Icons.info_outline),
+                onTap: () {},
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -60,6 +67,7 @@ class _StatTile extends StatelessWidget {
         color: theme.colorScheme.surface,
         border: Border.all(color: const Color(0xFFE5E7EB)),
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 3, offset: const Offset(0, 1))],
       ),
       child: Row(
         children: [
