@@ -65,8 +65,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 showCta: true,
                 ctaLabel: 'Start Learning',
                 onCtaPressed: () {
-                  // Navigate to Learn screen within the same app shell.
-                  // Since tabs are controlled in app.dart, fall back to pushing LearnScreen for now.
                   Navigator.of(context).push(MaterialPageRoute<void>(
                     builder: (_) => const LearnScreen(),
                   ));
@@ -75,24 +73,37 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     CircleAvatar(
                       radius: isTablet ? 28 : 22,
                       backgroundColor: const Color(0xFFDDEBFF),
                       child: Icon(Icons.school, color: cs.primary),
                     ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Welcome back, Learner', style: theme.textTheme.titleMedium),
-                        AnimatedDefaultTextStyle(
-                          duration: kReduceMotion ? Duration.zero : const Duration(milliseconds: 200),
-                          style: theme.textTheme.bodyMedium!.copyWith(color: const Color(0xFF666A70)),
-                          child: const Text('Learn any topic in 5-minute lessons'),
-                        ),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome back, Learner',
+                            style: theme.textTheme.titleMedium,
+                            softWrap: false,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          AnimatedDefaultTextStyle(
+                            duration: kReduceMotion ? Duration.zero : const Duration(milliseconds: 200),
+                            style: theme.textTheme.bodyMedium!.copyWith(color: const Color(0xFF666A70)),
+                            child: const Text(
+                              'Learn any topic in 5-minute lessons',
+                              softWrap: false,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -109,7 +120,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text('Suggested lessons', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                child: Text('Suggested lessons', 
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               const SizedBox(height: 8),
 
@@ -256,32 +271,51 @@ class _LessonCardHorizontalState extends State<_LessonCardHorizontal> {
           ),
           padding: const EdgeInsets.all(14),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Hero(
-                tag: 'lesson-title-${widget.lesson.id}',
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: Text(
-                    widget.lesson.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium,
-                  ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Hero(
+                      tag: 'lesson-title-${widget.lesson.id}',
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: Text(
+                          widget.lesson.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${widget.lesson.durationMinutes} min',
+                      style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF8A8F96)),
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 6),
-              Text('${widget.lesson.durationMinutes} min',
-                  style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF8A8F96))),
-              const Spacer(),
-              LinearProgressIndicator(
-                value: widget.progress.clamp(0, 100) / 100.0,
-                minHeight: 6,
-                borderRadius: BorderRadius.circular(999),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  LinearProgressIndicator(
+                    value: widget.progress.clamp(0, 100) / 100.0,
+                    minHeight: 6,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${widget.progress}% complete',
+                    style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF666A70)),
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-              const SizedBox(height: 6),
-              Text('${widget.progress}% complete',
-                  style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF666A70))),
             ],
           ),
         ),
