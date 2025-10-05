@@ -5,10 +5,11 @@ import '../../core/repositories/lesson_repository.dart';
 import '../../core/models/lesson.dart';
 import '../../core/state/app_state.dart';
 import '../learn/lesson_detail_screen.dart';
+import '../learn/learn_screen.dart';
 import 'widgets/progress_summary.dart';
 import '../../widgets/shimmer_box.dart';
 import '../../app.dart' show kReduceMotion;
-import '../../widgets/animated_header.dart';
+import 'package:micro_learning_ai_tutor_frontend/widgets/animated_header.dart';
 
 /// PUBLIC_INTERFACE
 class HomeScreen extends StatefulWidget {
@@ -61,6 +62,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 enableAnimation: HomeScreen.enableHeaderAnimation && !kReduceMotion,
                 speedFactor: HomeScreen.headerSpeed,
                 height: isTablet ? 220 : 200,
+                showCta: true,
+                ctaLabel: 'Start Learning',
+                onCtaPressed: () {
+                  // Navigate to Learn screen within the same app shell.
+                  // Since tabs are controlled in app.dart, fall back to pushing LearnScreen for now.
+                  Navigator.of(context).push(MaterialPageRoute<void>(
+                    builder: (_) => const LearnScreen(),
+                  ));
+                },
               ),
               const SizedBox(height: 12),
               Padding(
