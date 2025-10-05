@@ -1,0 +1,38 @@
+[
+  {
+    "id": "l1",
+    "title": "Intro to AI",
+    "duration_minutes": 5,
+    "summary": "Understand what AI is and where it's used.",
+    "progress": 10,
+    "sections": [
+      "What is AI?",
+      "Applications of AI",
+      "Key terms"
+    ]
+  },
+  {
+    "id": "l2",
+    "title": "Supervised Learning Basics",
+    "duration_minutes": 7,
+    "summary": "Learn about labeled data and model training.",
+    "progress": 0,
+    "sections": [
+      "Labeled datasets",
+      "Training and validation",
+      "Common algorithms"
+    ]
+  },
+  {
+    "id": "l3",
+    "title": "Neural Networks Overview",
+    "duration_minutes": 8,
+    "summary": "Explore neurons, layers, and activations.",
+    "progress": 0,
+    "sections": [
+      "Perceptron",
+      "Hidden layers",
+      "Activation functions"
+    ]
+  }
+]

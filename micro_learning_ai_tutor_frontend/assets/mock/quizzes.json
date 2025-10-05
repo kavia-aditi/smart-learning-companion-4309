@@ -1,0 +1,36 @@
+[
+  {
+    "id": "q1",
+    "title": "AI Fundamentals",
+    "description": "Test your understanding of core AI concepts.",
+    "questions": [
+      {
+        "id": "q1_1",
+        "prompt": "AI stands for:",
+        "options": ["Artificial Insight", "Artificial Intelligence", "Applied Informatics", "Algorithmic Interface"],
+        "correct_index": 1,
+        "explanation": "AI is short for Artificial Intelligence."
+      },
+      {
+        "id": "q1_2",
+        "prompt": "Supervised learning uses:",
+        "options": ["Unlabeled data", "Labeled data", "No data", "Only text data"],
+        "correct_index": 1,
+        "explanation": "Supervised learning needs labeled inputs and outputs."
+      }
+    ]
+  },
+  {
+    "id": "q2",
+    "title": "Neural Networks",
+    "description": "Basics of neurons and layers.",
+    "questions": [
+      {
+        "id": "q2_1",
+        "prompt": "An activation function is used to:",
+        "options": ["Normalize output", "Introduce non-linearity", "Optimize weights", "Remove bias"],
+        "correct_index": 1
+      }
+    ]
+  }
+]

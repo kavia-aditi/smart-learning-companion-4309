@@ -2,62 +2,69 @@
 
 Mobile frontend for Micro-Learning AI Tutor.
 
-## Backend Integration
+Ocean Professional theme, bottom navigation (Home, Learn, Quizzes, Profile), mock lessons/quizzes, and in-memory progress.
 
-This app supports two API backends:
+## Quick Start
 
-1) Legacy FastAPI (existing in this monorepo)
-- Base URL via dart-define FASTAPI_BASE_URL (fallback to API_BASE_URL)
-- Defaults: http://localhost:8080/api/v1
-- Client: lib/services/api_client.dart
+1) Install dependencies
+   flutter pub get
 
-2) New Node.js backend (this task)
-- Base URL via dart-define NODE_API_BASE_URL
-- Defaults: http://localhost:3000
-- Service: lib/services/api_service.dart
-
-Run examples:
-
-- Node backend (registration and lessons list):
-  flutter run --dart-define=NODE_API_BASE_URL=http://localhost:3000
-
-- FastAPI backend (projects list demo on home screen):
-  flutter run --dart-define=FASTAPI_BASE_URL=http://localhost:8080/api/v1
-
-## Example Usage
-
-Register user (Node):
-```dart
-final api = ApiService();
-await api.registerUser(email: 'user@example.com', name: 'User', password: 'secret123');
-```
-
-Fetch lessons (Node):
-```dart
-final lessons = await ApiService().fetchLessons();
-```
-
-Login and list projects (FastAPI example already wired in HomeDashboardScreen):
-```dart
-final client = ApiClient();
-final logged = await client.login(email: 'demo@example.com', password: 'demo1234');
-if (logged) {
-  final projects = await client.listProjects();
-}
-```
-
-## Running tests
-
-- Ensure Flutter SDK is available.
-- From micro_learning_ai_tutor_frontend directory:
-  flutter test --concurrency=1
+2) Run on device/emulator
+   flutter run
 
 Notes:
-- Tests use http/testing MockClient to simulate the Node backend for:
-  - POST /api/v1/register
-  - GET /api/v1/lessons
-- No external services are started and tests run in CI-friendly, non-interactive mode.
+- The app is self-contained and uses bundled mock data (assets/mock/*.json). No backend required.
+- For existing preview setup, no script changes are needed; main.dart runs by default.
 
-## Notes
-- Do not hardcode URLs. Prefer --dart-define at build time.
-- SharedPreferences key 'auth_token' is reused for bearer auth if the Node backend also issues JWT on login later.
+## Tabs
+
+- Home: Greeting, progress summary, and a horizontally scrollable "Suggested lessons" carousel.
+- Learn: List of lessons from mock data; tap opens detail screen with sections and a "Start micro-lesson" CTA that advances progress in-memory.
+- Quizzes: List of quizzes; tap to attempt a quiz in a single-question flow with basic feedback and in-memory score tracking.
+- Profile: Simple stats and settings placeholders.
+
+## Architecture
+
+- Theme: lib/theme/app_theme.dart (Ocean Professional colors and components)
+- State: Provider + ChangeNotifier (lib/core/state/app_state.dart) with in-memory lesson progress and quiz scores
+- Models: lib/core/models/lesson.dart, lib/core/models/quiz.dart
+- Services: Stubbed services with mock data and future API shapes
+  - lib/core/services/lesson_service.dart
+  - lib/core/services/quiz_service.dart
+  - lib/core/services/tutor_service.dart (AI placeholder)
+- Repos: Simple wrappers for services for easy swapping to real APIs later
+  - lib/core/repositories/lesson_repository.dart
+  - lib/core/repositories/quiz_repository.dart
+- Features:
+  - Home: lib/features/home/*
+  - Learn: lib/features/learn/*
+  - Quizzes: lib/features/quizzes/*
+  - Profile: lib/features/profile/*
+
+## Backend Integration (optional)
+
+This app also contains utilities for optional integration:
+
+- Legacy FastAPI backend (in this monorepo)
+  - Base URL via --dart-define FASTAPI_BASE_URL (fallback API_BASE_URL)
+  - Default: http://localhost:8080/api/v1
+  - Client: lib/services/api_client.dart
+  - Example:
+    flutter run --dart-define=FASTAPI_BASE_URL=http://localhost:8080/api/v1
+
+- Node.js backend (future)
+  - Base URL via --dart-define NODE_API_BASE_URL
+  - Default: http://localhost:3000
+  - Service: lib/services/api_service.dart
+  - Example:
+    flutter run --dart-define=NODE_API_BASE_URL=http://localhost:3000
+
+## Environment variables
+
+- Not required for current mock-only experience.
+- See .env.example for future variables.
+
+## Tests
+
+- Unit tests for ApiService mock integration and basic widget rendering exist.
+  flutter test --concurrency=1
