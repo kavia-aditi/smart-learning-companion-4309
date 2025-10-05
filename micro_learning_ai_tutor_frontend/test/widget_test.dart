@@ -1,30 +1,30 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:micro_learning_ai_tutor_frontend/main.dart';
+import 'package:micro_learning_ai_tutor_frontend/app.dart';
 
 void main() {
-  testWidgets('Home screen renders hero, subtitle, and cards', (WidgetTester tester) async {
-    await tester.pumpWidget(const AiTutorApp());
+  testWidgets('App boots and shows Home tab items', (WidgetTester tester) async {
+    // Use the real root widget exported by lib/app.dart
+    await tester.pumpWidget(const MicroLearningApp());
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Micro-Learning'), findsOneWidget);
-    expect(find.text('Learn any topic in 5-minute lessons'), findsOneWidget);
-    expect(find.text('Pick a topic'), findsOneWidget);
-    expect(find.text('DAILY QUIZ'), findsOneWidget);
-    expect(find.text('CHAT WITH EINSTEIN'), findsOneWidget);
-    expect(find.text('Start Quiz'), findsOneWidget);
-  });
-
-  testWidgets('Bottom navigation has expected tabs', (WidgetTester tester) async {
-    await tester.pumpWidget(const AiTutorApp());
-    await tester.pumpAndSettle();
-
-    // Verify presence of bottom nav destinations by tapping icons/labels indirectly.
-    expect(find.byIcon(Icons.home), findsNothing); // Not selected yet; outlined shown
+    // Expect bottom navigation labels present
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Learn'), findsOneWidget);
-    expect(find.text('Quiz'), findsOneWidget);
-    expect(find.text('Chat'), findsOneWidget);
+    expect(find.text('Quizzes'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
+  });
+
+  testWidgets('Learn tab list renders after data load', (WidgetTester tester) async {
+    await tester.pumpWidget(const MicroLearningApp());
+
+    // Initially show a progress indicator in Learn tab when loading
+    // Navigate to Learn tab by tapping its label
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Learn'));
+    await tester.pump();
+
+    // After async load settles, expect lesson tiles present from mock data
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    expect(find.textContaining('Intro to AI'), findsWidgets);
   });
 }

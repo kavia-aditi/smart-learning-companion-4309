@@ -36,7 +36,6 @@ class _LearnScreenState extends State<LearnScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
