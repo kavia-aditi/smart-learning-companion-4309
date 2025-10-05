@@ -8,10 +8,15 @@ import '../learn/lesson_detail_screen.dart';
 import 'widgets/progress_summary.dart';
 import '../../widgets/shimmer_box.dart';
 import '../../app.dart' show kReduceMotion;
+import '../../widgets/animated_header.dart';
 
 /// PUBLIC_INTERFACE
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  // Simple configuration to enable/disable header animation and adjust speed.
+  static const bool enableHeaderAnimation = true;
+  static const double headerSpeed = 1.0;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -46,46 +51,63 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       return Align(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with subtle animated subtitle
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: isTablet ? 28 : 22,
-                    backgroundColor: const Color(0xFFDDEBFF),
-                    child: Icon(Icons.school, color: cs.primary),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Welcome back, Learner', style: theme.textTheme.titleMedium),
-                      AnimatedDefaultTextStyle(
-                        duration: kReduceMotion ? Duration.zero : const Duration(milliseconds: 200),
-                        style: theme.textTheme.bodyMedium!.copyWith(color: const Color(0xFF666A70)),
-                        child: const Text('Learn any topic in 5-minute lessons'),
-                      ),
-                    ],
-                  ),
-                ],
+              // Animated header area - Ocean Professional theme
+              AnimatedHeader(
+                title: 'Welcome back 👋',
+                enableAnimation: HomeScreen.enableHeaderAnimation && !kReduceMotion,
+                speedFactor: HomeScreen.headerSpeed,
+                height: isTablet ? 220 : 200,
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: isTablet ? 28 : 22,
+                      backgroundColor: const Color(0xFFDDEBFF),
+                      child: Icon(Icons.school, color: cs.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Welcome back, Learner', style: theme.textTheme.titleMedium),
+                        AnimatedDefaultTextStyle(
+                          duration: kReduceMotion ? Duration.zero : const Duration(milliseconds: 200),
+                          style: theme.textTheme.bodyMedium!.copyWith(color: const Color(0xFF666A70)),
+                          child: const Text('Learn any topic in 5-minute lessons'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
 
               // Progress summary
-              const ProgressSummary(),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: ProgressSummary(),
+              ),
 
               const SizedBox(height: 16),
 
-              Text('Suggested lessons', style: theme.textTheme.titleMedium),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text('Suggested lessons', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              ),
               const SizedBox(height: 8),
 
               if (_loading)
                 SizedBox(
                   height: 160,
                   child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     scrollDirection: Axis.horizontal,
                     itemCount: 3,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
@@ -96,6 +118,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 SizedBox(
                   height: 160,
                   child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     scrollDirection: Axis.horizontal,
                     itemCount: _lessons.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
