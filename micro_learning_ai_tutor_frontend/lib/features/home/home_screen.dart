@@ -89,16 +89,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         children: [
                           Text(
                             'Welcome back, Learner',
-                            style: theme.textTheme.titleMedium,
-                            softWrap: false,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: const Color(0xFF111827),
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           AnimatedDefaultTextStyle(
                             duration: kReduceMotion ? Duration.zero : const Duration(milliseconds: 200),
-                            style: theme.textTheme.bodyMedium!.copyWith(color: const Color(0xFF666A70)),
+                            style: theme.textTheme.bodyMedium!.copyWith(
+                              color: const Color(0xFF666A70),
+                            ),
                             child: const Text(
                               'Learn any topic in 5-minute lessons',
-                              softWrap: false,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -118,12 +120,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
               const SizedBox(height: 16),
 
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text('Suggested lessons', 
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  softWrap: false,
-                  overflow: TextOverflow.ellipsis,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(
+                  'Suggested lessons',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: const Color(0xFF111827),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),

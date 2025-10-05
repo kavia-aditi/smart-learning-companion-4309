@@ -213,7 +213,7 @@ class _AnimatedHeaderState extends State<AnimatedHeader>
                         onCtaPressed: widget.onCtaPressed,
                         primaryColor: cs.primary,
                         accentColor: const Color(0xFFF59E0B),
-                        textColor: const Color(0xFF111827),
+                        textColor: Colors.white,
                       ),
                     ),
                   ),
