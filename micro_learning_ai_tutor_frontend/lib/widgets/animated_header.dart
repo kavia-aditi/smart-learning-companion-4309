@@ -294,9 +294,9 @@ class _HeaderContent extends StatelessWidget {
                 title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   color: textColor,
-                  fontSize: 28,
+                  fontSize: 32,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.2,
                 ),
