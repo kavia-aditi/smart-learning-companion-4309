@@ -6,10 +6,10 @@ import '../../core/models/lesson.dart';
 import '../../core/state/app_state.dart';
 import '../learn/lesson_detail_screen.dart';
 import '../learn/learn_screen.dart';
-import 'widgets/progress_summary.dart';
 import '../../widgets/shimmer_box.dart';
+import '../../widgets/featured_lesson_card.dart';
+import '../../widgets/lesson_category_card.dart';
 import '../../app.dart' show kReduceMotion;
-import 'package:micro_learning_ai_tutor_frontend/widgets/animated_header.dart';
 
 /// PUBLIC_INTERFACE
 class HomeScreen extends StatefulWidget {
@@ -45,142 +45,275 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isSmall = constraints.maxWidth < 360;
+        final heroHeight = isSmall ? 120.0 : 140.0;
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final isTablet = constraints.maxWidth >= 768;
-      return Align(
-        alignment: Alignment.topCenter,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Animated header area - Ocean Professional theme
-              AnimatedHeader(
-                title: 'Welcome back 👋',
-                enableAnimation: HomeScreen.enableHeaderAnimation && !kReduceMotion,
-                speedFactor: HomeScreen.headerSpeed,
-                height: isTablet ? 220 : 200,
-                showCta: true,
-                ctaLabel: 'Start Learning',
-                onCtaPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute<void>(
-                    builder: (_) => const LearnScreen(),
-                  ));
-                },
-              ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: isTablet ? 28 : 22,
-                      backgroundColor: const Color(0xFFDDEBFF),
-                      child: Icon(Icons.school, color: cs.primary),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Welcome back, Learner',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: const Color(0xFF111827),
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600,
+        return SafeArea(
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 12),
+                      // Header row: Title + icons
+                      _HeaderRow(),
+                      const SizedBox(height: 16),
+
+                      // Continue Learning hero
+                      FeaturedLessonCard(
+                        height: heroHeight,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const LearnScreen(),
                             ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          AnimatedDefaultTextStyle(
-                            duration: kReduceMotion ? Duration.zero : const Duration(milliseconds: 200),
-                            style: theme.textTheme.bodyMedium!.copyWith(
-                              color: const Color(0xFF666A70),
-                            ),
-                            child: const Text(
-                              'Learn any topic in 5-minute lessons',
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-              // Progress summary
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: ProgressSummary(),
-              ),
+                      // Data Science progress block
+                      Text(
+                        'Data Science',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF0B132B),
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '2 of 5 lessons',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF6B7280),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
+                      // Popular Courses
+                      Text(
+                        'Popular Courses',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF0B132B),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
 
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'Suggested lessons',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFF111827),
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
+                      // Grid of categories
+                      _CoursesGrid(),
+                      const SizedBox(height: 24),
+
+                      // Suggested lessons horizontal list from repository (existing)
+                      Text(
+                        'Suggested lessons',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: const Color(0xFF111827),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
 
               if (_loading)
-                SizedBox(
-                  height: 160,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: 3,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (_, __) => const ShimmerBox(width: 260, height: 160, borderRadius: 12),
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 160,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 3,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (_, __) =>
+                          const ShimmerBox(width: 260, height: 160, borderRadius: 12),
+                    ),
                   ),
                 )
               else
-                SizedBox(
-                  height: 160,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _lessons.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      final lesson = _lessons[index];
-                      final progress = context.select<AppState, int>(
-                        (s) => s.lessonProgress[lesson.id] ?? lesson.progress,
-                      );
-                      // Slide+fade in per item
-                      final delayMs = kReduceMotion ? 0 : 60 * index;
-                      return _AnimatedAppear(
-                        delayMs: delayMs,
-                        child: _LessonCardHorizontal(
-                          lesson: lesson,
-                          progress: progress,
-                          onTap: () {
-                            Navigator.of(context).push(MaterialPageRoute<void>(
-                              builder: (_) => LessonDetailScreen(lessonId: lesson.id),
-                            ));
-                          },
-                        ),
-                      );
-                    },
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 160,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _lessons.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) {
+                        final lesson = _lessons[index];
+                        final progress = context.select<AppState, int>(
+                          (s) => s.lessonProgress[lesson.id] ?? lesson.progress,
+                        );
+                        final delayMs = kReduceMotion ? 0 : 60 * index;
+                        return _AnimatedAppear(
+                          delayMs: delayMs,
+                          child: _LessonCardHorizontal(
+                            lesson: lesson,
+                            progress: progress,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      LessonDetailScreen(lessonId: lesson.id),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           ),
+        );
+      },
+    );
+  }
+}
+
+class _HeaderRow extends StatefulWidget {
+  @override
+  State<_HeaderRow> createState() => _HeaderRowState();
+}
+
+class _HeaderRowState extends State<_HeaderRow> {
+  bool _p1 = false;
+  bool _p2 = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'Quick Learning',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF0B132B),
+                  letterSpacing: -0.2,
+                ),
+          ),
         ),
-      );
-    });
+        _CircleIconButton(
+          icon: Icons.search,
+          pressed: _p1,
+          onTapDown: () => setState(() => _p1 = true),
+          onTapUpOrCancel: () => setState(() => _p1 = false),
+        ),
+        const SizedBox(width: 12),
+        _CircleIconButton(
+          icon: Icons.notifications_none_rounded,
+          pressed: _p2,
+          onTapDown: () => setState(() => _p2 = true),
+          onTapUpOrCancel: () => setState(() => _p2 = false),
+        ),
+      ],
+    );
+  }
+}
+
+class _CircleIconButton extends StatelessWidget {
+  const _CircleIconButton({
+    required this.icon,
+    required this.pressed,
+    required this.onTapDown,
+    required this.onTapUpOrCancel,
+  });
+
+  final IconData icon;
+  final bool pressed;
+  final VoidCallback onTapDown;
+  final VoidCallback onTapUpOrCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final double scale = pressed ? 0.98 : 1.0;
+    return GestureDetector(
+      onTapDown: (_) => onTapDown(),
+      onTapUp: (_) => onTapUpOrCancel(),
+      onTapCancel: onTapUpOrCancel,
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 100),
+        scale: scale,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(15),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: const Icon(Icons.search, color: Color(0xFF1F3C88)),
+        ),
+      ),
+    );
+  }
+}
+
+class _CoursesGrid extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // childAspectRatio ~ 1.9 matches spec; adjust slightly for very small phones.
+    final width = MediaQuery.of(context).size.width;
+    final isSmall = width < 360;
+    final aspect = isSmall ? 1.8 : 1.9;
+
+    return GridView.count(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      crossAxisCount: 2,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: aspect,
+      children: const [
+        LessonCategoryCard(
+          title: 'Python',
+          backgroundColor: Color(0xFFF9C74F),
+          icon: Icons.play_arrow_rounded,
+          textColor: Color(0xFF1F2937),
+        ),
+        LessonCategoryCard(
+          title: 'Web Development',
+          backgroundColor: Color(0xFF6C63FF),
+          icon: Icons.code_rounded,
+          textColor: Colors.white,
+        ),
+        LessonCategoryCard(
+          title: 'Machine Learning',
+          backgroundColor: Color(0xFF22C58B),
+          icon: Icons.show_chart_rounded,
+          textColor: Colors.white,
+        ),
+        LessonCategoryCard(
+          title: 'Graphic Design',
+          backgroundColor: Color(0xFFFF5CA8),
+          icon: Icons.bar_chart_rounded,
+          textColor: Colors.white,
+        ),
+      ],
+    );
   }
 }
 
@@ -266,15 +399,14 @@ class _LessonCardHorizontalState extends State<_LessonCardHorizontal> {
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
-              BoxShadow(color: Colors.black.withAlpha(_pressed ? 6 : 18), blurRadius: _pressed ? 3 : 6, offset: const Offset(0, 2)),
+              BoxShadow(
+                color: Colors.black.withAlpha(_pressed ? 15 : 25),
+                blurRadius: _pressed ? 6 : 12,
+                offset: const Offset(0, 6),
+              ),
             ],
-            gradient: LinearGradient(
-              colors: [theme.colorScheme.primary.withAlpha(8), Colors.white],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
           ),
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -295,6 +427,7 @@ class _LessonCardHorizontalState extends State<_LessonCardHorizontal> {
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
+                            color: const Color(0xFF0B132B),
                           ),
                         ),
                       ),
@@ -302,7 +435,7 @@ class _LessonCardHorizontalState extends State<_LessonCardHorizontal> {
                     const SizedBox(height: 6),
                     Text(
                       '${widget.lesson.durationMinutes} min',
-                      style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF8A8F96)),
+                      style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF6B7280)),
                       softWrap: false,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -320,7 +453,7 @@ class _LessonCardHorizontalState extends State<_LessonCardHorizontal> {
                   const SizedBox(height: 6),
                   Text(
                     '${widget.progress}% complete',
-                    style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF666A70)),
+                    style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF6B7280)),
                     softWrap: false,
                     overflow: TextOverflow.ellipsis,
                   ),

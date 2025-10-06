@@ -65,6 +65,7 @@ flutter:
   assets:
     - .env
     - assets/
+
     - assets/mock/lessons.json
     - assets/mock/quizzes.json
 
