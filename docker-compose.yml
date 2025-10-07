@@ -1,9 +1,5 @@
 version: "3.9"
 
-# Orchestrates the backend API and Flutter frontend containers.
-# Network: services can reach each other by service name (e.g., 'backend').
-# Note: Ensure you have Docker and Docker Compose installed.
-
 name: smart-learning-companion
 
 networks:
@@ -11,38 +7,47 @@ networks:
     name: smart-learning-net
     driver: bridge
 
+volumes:
+  ollama:
+
 services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - smart-learning-net
+
   backend:
     container_name: backend
     build:
       context: ./smart-learning-companion-4309/backend-api
       dockerfile: Dockerfile
-    # If backend-api/.env exists, it will be loaded automatically.
-    # If it doesn't, copy backend-api/.env.example to backend-api/.env and set values (see README).
     env_file:
       - ./smart-learning-companion-4309/backend-api/.env
     environment:
-      # Provide a default if not supplied via env_file
       PORT: "${PORT:-8080}"
+      AI_PROVIDER: "ollama"
+      OLLAMA_BASE_URL: "http://ollama:11434"
+      OLLAMA_MODEL: "llama3:instruct"
     ports:
       - "8080:8080"
+    depends_on:
+      - ollama
     restart: unless-stopped
     networks:
       - smart-learning-net
 
   frontend:
     container_name: frontend
-    # Prefer building from the project's Dockerfile if present.
-    # If your Flutter frontend does NOT yet have a Dockerfile, you have two options:
-    # 1) Create one in micro_learning_ai_tutor_frontend/ (recommended; see README for template ideas)
-    # 2) Temporarily use a community Flutter web image to serve a built web app.
-    #
-    # This compose assumes a Dockerfile exists. If not, add one or switch to an image-based approach.
     build:
       context: ./smart-learning-companion-4309/micro_learning_ai_tutor_frontend
       dockerfile: Dockerfile
     environment:
-      # Frontend will call the backend via Docker network using the service name 'backend'.
       API_BASE_URL: "http://backend:8080"
     depends_on:
       - backend

@@ -1,6 +1,6 @@
 # Micro Learning Backend API (Node.js + TypeScript)
 
-A lightweight Express + TypeScript backend for the Micro Learning AI Tutor app. Provides APIs for lessons, quizzes, user progress, and an OpenAI-backed AI tutor chat endpoint (with safe fallbacks). Designed for easy expansion (e.g., swap in SQLite later).
+A lightweight Express + TypeScript backend for the Micro Learning AI Tutor app. Provides APIs for lessons, quizzes, user progress, and a tutor chat endpoint with provider-based AI (Ollama by default, OpenAI optional).
 
 ## Features
 
@@ -8,7 +8,7 @@ A lightweight Express + TypeScript backend for the Micro Learning AI Tutor app. 
 - Lessons: list and get
 - Quizzes: list by lesson and submit answers (scoring + per-question feedback)
 - Progress: get and upsert per user
-- Tutor chat: simple rule-based responses (placeholder for future OpenAI integration)
+- Tutor chat: AI provider-based with rules fallback
 - TypeScript with zod validation and centralized error handling
 - CORS enabled for Flutter web/preview
 
@@ -26,7 +26,7 @@ cp .env.example .env
 # adjust values if needed
 ```
 
-3) Run in development (default http://localhost:4000)
+3) Run in development (default http://localhost:8080)
 ```
 npm run dev
 ```
@@ -36,6 +36,89 @@ npm run dev
 npm run build
 npm start
 ```
+
+The server listens on the PORT environment variable and defaults to 8080.
+
+## AI Provider Configuration
+
+The tutor chat at `/api/tutor/chat` supports switching between providers via environment variables.
+
+```
+# Provider selection: 'ollama' (default) or 'openai'
+AI_PROVIDER=ollama
+
+# Ollama settings (local via docker-compose)
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=llama3:instruct
+
+# OpenAI settings (only if AI_PROVIDER=openai)
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini-2024-07-18
+OPENAI_BASE_URL=https://api.openai.com
+```
+
+Behavior:
+- If the selected provider fails or is unreachable, the endpoint falls back to a rules-based response.
+- History is bounded to the last 10 exchanges (20 turns).
+
+### Running with Docker Compose (Ollama)
+
+At the repository root, `docker-compose.yml` includes an `ollama` service and configures the backend to use it.
+
+Steps:
+1. From the repo root, run: `docker compose up -d`
+2. On first chat request, Ollama may need to pull the model (`llama3:instruct`). This can take several minutes.
+
+Optional pre-pull to speed up first response:
+```
+docker exec -it <ollama_container_name> ollama pull llama3:instruct
+```
+
+### Test the Chat Endpoint
+
+Example cURL:
+```
+curl -X POST http://localhost:8080/api/tutor/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Explain photosynthesis briefly","context":{"history":[]}}'
+```
+
+Response format:
+```
+{
+  "reply": " ... assistant message ... ",
+  "model": "llama3:instruct",
+  "provider": "ollama"
+}
+```
+
+### Notes on Models
+
+- Default model: `llama3:instruct`. You can change `OLLAMA_MODEL` to other locally available models supported by Ollama.
+- First use of a new model triggers a model download. Ensure adequate disk space and allow time for the pull.
+
+## API Endpoints
+
+Base URL: `http://localhost:8080`
+
+- GET `/health` -> `{ "status": "ok" }`
+- GET `/api/lessons`
+- GET `/api/lessons/:id`
+- GET `/api/quizzes?lessonId=lesson-1`
+- POST `/api/quizzes/:quizId/submit`
+- GET `/api/progress/:userId`
+- POST `/api/progress/:userId`
+- POST `/api/tutor/chat` (AI provider-based with rules fallback)
+
+## Environment Variables (summary)
+
+- PORT=8080
+- NODE_ENV=development
+- CORS_ORIGIN=http://localhost:3000
+- AI_PROVIDER=ollama
+- OLLAMA_BASE_URL=http://ollama:11434
+- OLLAMA_MODEL=llama3:instruct
+- (Optional) OPENAI_API_KEY, OPENAI_MODEL, OPENAI_BASE_URL
 
 ## Docker
 
@@ -59,196 +142,3 @@ cp .env.example .env
 # then pass it to docker
 docker run --rm -p 8080:8080 --env-file .env micro-learning-backend-api:latest
 ```
-
-Optional docker-compose snippet:
-```yaml
-version: "3.9"
-services:
-  backend-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: micro-learning-backend-api:latest
-    container_name: micro-learning-backend-api
-    environment:
-      - NODE_ENV=production
-      - PORT=8080
-      # - OPENAI_API_KEY=${OPENAI_API_KEY} # optional
-      # - CORS_ORIGIN=http://localhost:3000
-    ports:
-      - "8080:8080"
-    restart: unless-stopped
-```
-
-The server listens on the PORT environment variable and defaults to 8080.
-
-### Environment Variables
-
-- PORT=4000
-- OPENAI_API_KEY= your OpenAI API key (required for tutor chat)
-- OPENAI_MODEL= model name (default: gpt-4o-mini-2024-07-18)
-- NODE_ENV=development
-- CORS_ORIGIN=http://localhost:3000
-
-Create `.env` based on `.env.example`.
-
-Example:
-```
-PORT=4000
-NODE_ENV=development
-CORS_ORIGIN=http://localhost:3000
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o-mini-2024-07-18
-```
-
-## API Endpoints
-
-Base URL: `http://localhost:4000`
-
-### Health
-- GET `/health` -> `{ "status": "ok" }`
-
-### Lessons
-- GET `/api/lessons`
-  - Response: `{ lessons: Lesson[] }`
-- GET `/api/lessons/:id`
-  - Response: `{ lesson: Lesson }`
-  - 404 if not found
-
-### Quizzes
-- GET `/api/quizzes?lessonId=lesson-1`
-  - Response: `{ quizzes: Quiz[] }`
-  - 400 if `lessonId` missing
-- POST `/api/quizzes/:quizId/submit`
-  - Body:
-    ```
-    {
-      "answers": [
-        { "questionId": "q1", "answer": "o1" }
-      ]
-    }
-    ```
-  - Response:
-    ```
-    {
-      "quizId": "quiz-1",
-      "totalQuestions": 2,
-      "correct": 1,
-      "score": 50,
-      "feedback": [
-        {
-          "questionId": "q1",
-          "correct": true,
-          "correctOptionId": "o1",
-          "explanation": "Correct!"
-        }
-      ]
-    }
-    ```
-  - 404 if quiz not found
-  - 400 if payload invalid
-
-### Progress
-- GET `/api/progress/:userId`
-  - Response:
-    ```
-    {
-      "userId": "user-123",
-      "progress": {
-        "userId": "user-123",
-        "completedLessons": [],
-        "lastActiveAt": "2025-01-01T00:00:00.000Z"
-      }
-    }
-    ```
-- POST `/api/progress/:userId`
-  - Body:
-    ```
-    {
-      "completedLessons": ["lesson-1"],
-      "lastActiveAt": "2025-01-01T00:00:00.000Z"
-    }
-    ```
-  - Response mirrors GET with merged/upserted data
-
-### Tutor (AI Chat)
-- POST `/api/tutor/chat`
-  - Body:
-    ```
-    {
-      "message": "Can you explain overfitting?",
-      "userId": "user-123",
-      "context": {
-        "lessonId": "lesson-1",
-        "quizId": "quiz-1",
-        "history": [
-          {"role": "system", "content": "You are a helpful tutor."},
-          {"role": "user", "content": "What is model complexity?"}
-        ]
-      }
-    }
-    ```
-  - Response:
-    ```
-    {
-      "reply": "Concise step-by-step answer...",
-      "model": "gpt-4o-mini-2024-07-18",
-      "usage": {
-        "prompt_tokens": 123,
-        "completion_tokens": 45,
-        "total_tokens": 168
-      }
-    }
-    ```
-  - Notes:
-    - If OpenAI is unavailable or OPENAI_API_KEY is missing, the endpoint returns HTTP 503 with a friendly fallback message and `error: true`.
-    - History is trimmed to the last 10 messages to control token usage.
-
-Example curl:
-```
-curl -X POST http://localhost:4000/api/tutor/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "Explain gradient descent briefly.",
-    "userId": "demo-user",
-    "context": {
-      "lessonId": "lesson-1",
-      "history": [{"role":"user","content":"What is a derivative?"}]
-    }
-  }'
-```
-
-Costs & data handling:
-- Using OpenAI may incur costs. Set OPENAI_MODEL to a cost-effective model (default provided).
-- Do not log user prompts or full OpenAI responses in production. The server logs minimal metadata only.
-- Review your organization’s data policies before sending proprietary or sensitive information to third-party APIs.
-
-## Data Models (TypeScript)
-
-- Lesson: `{ id, title, description, category?, durationMinutes? }`
-- Quiz: `{ id, lessonId, title, questions: Question[] }`
-- Question: `{ id, text, options: {id,text}[], correctOptionId }`
-- Progress: `{ userId, completedLessons: string[], lastActiveAt: ISOString }`
-- ChatMessage: `{ role: 'user'|'assistant'|'system', content: string }`
-
-## CORS
-
-CORS is configured to allow:
-- `CORS_ORIGIN` from `.env` (default includes http://localhost:3000)
-- Fallback allows any origin for development convenience (tighten for production).
-
-## Flutter Integration
-
-- Base URL for development: `http://localhost:4000`
-- Endpoints under `/api/...`
-- Health check at `/health` for connectivity testing
-
-## Future Work
-
-- Replace in-memory store with SQLite/Prisma or another lightweight DB.
-- AuthN/AuthZ for user routes.
-- OpenAI (or similar) integration in Tutor endpoint.
-
-## License
-
-MIT
