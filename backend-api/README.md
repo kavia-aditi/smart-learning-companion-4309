@@ -1,6 +1,6 @@
 # Micro Learning Backend API (Node.js + TypeScript)
 
-A lightweight Express + TypeScript backend for the Micro Learning AI Tutor app. Provides APIs for lessons, quizzes, user progress, and a stubbed AI tutor chat endpoint. Designed for easy expansion (e.g., swap in SQLite later).
+A lightweight Express + TypeScript backend for the Micro Learning AI Tutor app. Provides APIs for lessons, quizzes, user progress, and an OpenAI-backed AI tutor chat endpoint (with safe fallbacks). Designed for easy expansion (e.g., swap in SQLite later).
 
 ## Features
 
@@ -85,11 +85,21 @@ The server listens on the PORT environment variable and defaults to 8080.
 ### Environment Variables
 
 - PORT=4000
-- OPENAI_API_KEY= (optional; reserved for future integration)
+- OPENAI_API_KEY= your OpenAI API key (required for tutor chat)
+- OPENAI_MODEL= model name (default: gpt-4o-mini-2024-07-18)
 - NODE_ENV=development
 - CORS_ORIGIN=http://localhost:3000
 
 Create `.env` based on `.env.example`.
+
+Example:
+```
+PORT=4000
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:3000
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini-2024-07-18
+```
 
 ## API Endpoints
 
@@ -161,33 +171,57 @@ Base URL: `http://localhost:4000`
     ```
   - Response mirrors GET with merged/upserted data
 
-### Tutor (AI Chat - Stub)
+### Tutor (AI Chat)
 - POST `/api/tutor/chat`
   - Body:
     ```
     {
+      "message": "Can you explain overfitting?",
       "userId": "user-123",
-      "messages": [
-        {"role": "user", "content": "Can you explain?"}
-      ],
-      "context": { "lessonId": "lesson-1" }
+      "context": {
+        "lessonId": "lesson-1",
+        "quizId": "quiz-1",
+        "history": [
+          {"role": "system", "content": "You are a helpful tutor."},
+          {"role": "user", "content": "What is model complexity?"}
+        ]
+      }
     }
     ```
   - Response:
     ```
     {
-      "userId": "user-123",
-      "messages": [..., {"role":"assistant","content":"..."}],
-      "reply": {"role":"assistant","content":"..."}
+      "reply": "Concise step-by-step answer...",
+      "model": "gpt-4o-mini-2024-07-18",
+      "usage": {
+        "prompt_tokens": 123,
+        "completion_tokens": 45,
+        "total_tokens": 168
+      }
     }
     ```
-  - Heuristics:
-    - If a lessonId is provided, mention lesson title in response.
-    - If user asks to "explain" → provide explanation.
-    - If user asks for an "example" → provide example.
-    - If "quiz" is mentioned → suggest a related quiz.
+  - Notes:
+    - If OpenAI is unavailable or OPENAI_API_KEY is missing, the endpoint returns HTTP 503 with a friendly fallback message and `error: true`.
+    - History is trimmed to the last 10 messages to control token usage.
 
-Note: TODO to integrate OpenAI with `OPENAI_API_KEY` in the future.
+Example curl:
+```
+curl -X POST http://localhost:4000/api/tutor/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Explain gradient descent briefly.",
+    "userId": "demo-user",
+    "context": {
+      "lessonId": "lesson-1",
+      "history": [{"role":"user","content":"What is a derivative?"}]
+    }
+  }'
+```
+
+Costs & data handling:
+- Using OpenAI may incur costs. Set OPENAI_MODEL to a cost-effective model (default provided).
+- Do not log user prompts or full OpenAI responses in production. The server logs minimal metadata only.
+- Review your organization’s data policies before sending proprietary or sensitive information to third-party APIs.
 
 ## Data Models (TypeScript)
 

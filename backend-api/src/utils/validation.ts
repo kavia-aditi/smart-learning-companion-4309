@@ -22,12 +22,20 @@ export const ChatMessageSchema = z.object({
 });
 
 export const TutorChatSchema = z.object({
-  userId: z.string().min(1),
-  messages: z.array(ChatMessageSchema).min(1),
+  message: z.string().min(1, 'message is required'),
+  userId: z.string().min(1).optional(),
   context: z
     .object({
       lessonId: z.string().min(1).optional(),
-      quizId: z.string().min(1).optional()
+      quizId: z.string().min(1).optional(),
+      history: z
+        .array(
+          z.object({
+            role: ChatRoleEnum,
+            content: z.string().min(1),
+          })
+        )
+        .optional()
     })
     .optional()
 });

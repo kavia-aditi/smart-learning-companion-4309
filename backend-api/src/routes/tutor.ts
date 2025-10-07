@@ -5,7 +5,7 @@ const router = Router();
 
 /**
  * POST /api/tutor/chat
- * Chat with AI tutor (stubbed heuristic response)
+ * Chat with AI tutor (OpenAI-backed, with safe fallbacks)
  */
 router.post('/chat', chatWithTutor);
 
