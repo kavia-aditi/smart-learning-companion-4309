@@ -37,6 +37,51 @@ npm run build
 npm start
 ```
 
+## Docker
+
+Build the image:
+```
+docker build -t micro-learning-backend-api:latest .
+```
+
+Run the container (exposes 8080):
+```
+docker run --rm -p 8080:8080 \
+  -e PORT=8080 \
+  --name micro-learning-backend-api \
+  micro-learning-backend-api:latest
+```
+
+Environment file:
+```
+# create once
+cp .env.example .env
+# then pass it to docker
+docker run --rm -p 8080:8080 --env-file .env micro-learning-backend-api:latest
+```
+
+Optional docker-compose snippet:
+```yaml
+version: "3.9"
+services:
+  backend-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: micro-learning-backend-api:latest
+    container_name: micro-learning-backend-api
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      # - OPENAI_API_KEY=${OPENAI_API_KEY} # optional
+      # - CORS_ORIGIN=http://localhost:3000
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+```
+
+The server listens on the PORT environment variable and defaults to 8080.
+
 ### Environment Variables
 
 - PORT=4000

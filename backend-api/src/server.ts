@@ -48,10 +48,10 @@ app.use('/api/tutor', tutorRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-const PORT = Number(process.env.PORT) || 4000;
+const PORT = Number(process.env.PORT) || 8080;
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console
-  console.log(`Backend API listening on http://localhost:${PORT}`);
+  console.log(`Backend API listening on http://0.0.0.0:${PORT}`);
 });
 
 export default app;
