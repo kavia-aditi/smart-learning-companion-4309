@@ -1,81 +1,107 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
+import 'package:micro_learning_ai_tutor_frontend/config/env.dart';
 
-/// PUBLIC_INTERFACE
+/// Lightweight HTTP client to interact with the backend using a configurable base URL.
 class ApiClient {
-  /// Simple API client for the existing FastAPI backend (legacy in this repo).
-  ///
-  /// Configuration:
-  /// - Reads base from dart-define 'FASTAPI_BASE_URL' first.
-  /// - Falls back to 'API_BASE_URL' used previously in this repo.
-  /// - Defaults to 'http://localhost:8080/api/v1'.
-  ApiClient({http.Client? client, String? baseUrl})
-      : _client = client ?? http.Client(),
-        _baseUrl = baseUrl ??
-            const String.fromEnvironment('FASTAPI_BASE_URL', defaultValue: '')
-                .ifEmpty(const String.fromEnvironment('API_BASE_URL', defaultValue: ''))
-                .ifEmpty('http://localhost:8080/api/v1');
+  ApiClient({http.Client? httpClient})
+      : _http = httpClient ?? http.Client(),
+        _baseUri = _normalizeBaseUrl(AppEnv.backendBaseUrl);
 
-  final http.Client _client;
-  final String _baseUrl;
+  final http.Client _http;
+  final Uri _baseUri;
 
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+  static Uri _normalizeBaseUrl(String base) {
+    // Ensure the base URL has no trailing slash to avoid double slashes on join.
+    final sanitized = base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+    return Uri.parse(sanitized);
   }
 
-  Future<Map<String, String>> _headers() async {
-    final token = await _getToken();
-    return {
-      'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
-    };
+  Uri _buildUri(String path, [Map<String, dynamic>? query]) {
+    final cleanedPath = path.startsWith('/') ? path : '/$path';
+    return _baseUri.replace(
+      path: '${_baseUri.path}$cleanedPath',
+      queryParameters: query?.map((k, v) => MapEntry(k, '$v')),
+    );
   }
+
+  Map<String, String> get _jsonHeaders => const {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
 
   // PUBLIC_INTERFACE
-  Future<Map<String, dynamic>> register({required String email, required String name, required String password}) async {
-    final res = await _client.post(
-      Uri.parse('$_baseUrl/auth/register'),
-      headers: await _headers(),
-      body: jsonEncode({'email': email, 'name': name, 'password': password}),
-    );
-    return jsonDecode(res.body) as Map<String, dynamic>;
-  }
-
-  // PUBLIC_INTERFACE
-  Future<bool> login({required String email, required String password}) async {
-    final res = await _client.post(
-      Uri.parse('$_baseUrl/auth/login'),
-      headers: await _headers(),
-      body: jsonEncode({'email': email, 'password': password}),
-    );
-    final body = jsonDecode(res.body) as Map<String, dynamic>;
-    if (res.statusCode == 200 && body['success'] == true) {
-      final token = body['data']['access_token'] as String;
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', token);
-      return true;
-    }
+  /// Performs a GET request and returns decoded JSON.
+  Future<dynamic> get(String path, {Map<String, dynamic>? query}) async {
+    final uri = _buildUri(path, query);
     if (kDebugMode) {
-      debugPrint('Login failed: ${res.statusCode} $body');
+      // ignore: avoid_print
+      print('[ApiClient][GET] $uri');
     }
-    return false;
+    final res = await _http.get(uri, headers: _jsonHeaders);
+    return _handleResponse(res);
   }
 
   // PUBLIC_INTERFACE
-  Future<List<dynamic>> listProjects() async {
-    final res = await _client.get(Uri.parse('$_baseUrl/projects'), headers: await _headers());
-    final body = jsonDecode(res.body) as Map<String, dynamic>;
-    if (res.statusCode == 200 && body['success'] == true) {
-      return body['data'] as List<dynamic>;
+  /// Performs a POST request with a JSON body and returns decoded JSON.
+  Future<dynamic> post(String path, Map<String, dynamic> body, {Map<String, dynamic>? query}) async {
+    final uri = _buildUri(path, query);
+    if (kDebugMode) {
+      // ignore: avoid_print
+      print('[ApiClient][POST] $uri body=${jsonEncode(body)}');
     }
-    return [];
+    final res = await _http.post(uri, headers: _jsonHeaders, body: jsonEncode(body));
+    return _handleResponse(res);
+  }
+
+  dynamic _handleResponse(http.Response res) {
+    final status = res.statusCode;
+    final text = res.body;
+    if (status >= 200 && status < 300) {
+      if (text.isEmpty) return null;
+      try {
+        return jsonDecode(text);
+      } catch (_) {
+        return text;
+      }
+    } else {
+      throw ApiException(
+        statusCode: status,
+        message: _extractErrorMessage(text) ?? 'Request failed with status $status',
+        rawBody: text,
+      );
+    }
+  }
+
+  String? _extractErrorMessage(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map && decoded['message'] is String) {
+        return decoded['message'] as String;
+      }
+      if (decoded is Map && decoded['error'] is String) {
+        return decoded['error'] as String;
+      }
+    } catch (_) {
+      // not JSON
+    }
+    return null;
   }
 }
 
-/// Helper to provide fallback logic for const String.fromEnvironment values.
-extension _IfEmpty on String {
-  String ifEmpty(String fallback) => isEmpty ? fallback : this;
+/// Exception thrown by ApiClient for non-2xx responses.
+class ApiException implements Exception {
+  const ApiException({
+    required this.statusCode,
+    required this.message,
+    this.rawBody,
+  });
+
+  final int statusCode;
+  final String message;
+  final String? rawBody;
+
+  @override
+  String toString() => 'ApiException($statusCode): $message';
 }

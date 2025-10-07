@@ -1,25 +1,25 @@
 # micro_learning_ai_tutor_frontend
 
-Mobile frontend for Micro-Learning AI Tutor.
+Mobile frontend for the Micro Learning AI Tutor.
 
 Ocean Professional theme, bottom navigation (Home, Learn, Quizzes, Profile), mock lessons/quizzes, and in-memory progress.
 
 ## Quick Start
 
-1) Install dependencies
+1) Install dependencies  
    flutter pub get
 
-2) Run on device/emulator
+2) Run on device/emulator (mock data only)  
    flutter run
 
 Notes:
-- The app is self-contained and uses bundled mock data (assets/mock/*.json). No backend required.
-- For existing preview setup, no script changes are needed; main.dart runs by default.
+- The app works out-of-the-box with bundled mock data in assets/mock/*.json.
+- Backend connectivity is optional. See Networking and Environment Configuration below.
 
 ## Tabs
 
 - Home: Greeting, progress summary, and a horizontally scrollable "Suggested lessons" carousel.
-- Learn: List of lessons from mock data; tap opens detail screen with sections and a "Start micro-lesson" CTA that advances progress in-memory.
+- Learn: List of lessons; tap opens detail screen with sections and a "Start micro-lesson" CTA that advances progress in-memory.
 - Quizzes: List of quizzes; tap to attempt a quiz in a single-question flow with basic feedback and in-memory score tracking.
 - Profile: Simple stats and settings placeholders.
 
@@ -28,11 +28,11 @@ Notes:
 - Theme: lib/theme/app_theme.dart (Ocean Professional colors, typography, components)
 - State: Provider + ChangeNotifier (lib/core/state/app_state.dart) with in-memory lesson progress and quiz scores
 - Models: lib/core/models/lesson.dart, lib/core/models/quiz.dart
-- Services: Stubbed services with mock data and future API shapes
+- Services (mock + API-ready):
   - lib/core/services/lesson_service.dart
   - lib/core/services/quiz_service.dart
   - lib/core/services/tutor_service.dart (AI placeholder)
-- Repos: Simple wrappers for services for easy swapping to real APIs later
+- Repos:
   - lib/core/repositories/lesson_repository.dart
   - lib/core/repositories/quiz_repository.dart
 - Features:
@@ -43,49 +43,103 @@ Notes:
 - Widgets:
   - Shimmer skeletons: lib/widgets/shimmer_box.dart
 
-## UI polish & animations
+## Networking and Environment Configuration
 
-- Theme refinements: consistent spacing (8/12/16/24), rounded corners (12–16), subtle elevations, gradient headers.
-- Animations:
-  - Tab transitions use AnimatedSwitcher for smooth cross-fades and slight slides.
-  - Lists/cards animate on appearance (fade+translate) and have press feedback (tiny scale change).
-  - Hero transition between lesson title in list/card and Lesson Detail app bar.
-  - Quiz attempt area switches with AnimatedSwitcher.
-  - Shimmer placeholders during loading states (Home/Learn/Quizzes).
-- Accessibility:
-  - Minimum tap sizes for buttons and controls.
-  - Reduced motion support via kReduceMotion flag.
+A lightweight networking layer is provided for calling the backend through docker-compose networking or a local URL.
 
-Toggle reduced motion:
-- Open lib/app.dart and set:
-  const bool kReduceMotion = true;
+- Base URL default (compose network): http://backend-api:8080
+- Override at build/run time via --dart-define:
+  flutter run --dart-define=BACKEND_BASE_URL=http://localhost:8080
 
-This disables most animations and is useful for CI or users who prefer reduced motion.
+Environment is read by lib/config/env.dart:
+```dart
+class AppEnv {
+  static const String backendBaseUrl = String.fromEnvironment(
+    'BACKEND_BASE_URL',
+    defaultValue: 'http://backend-api:8080',
+  );
+}
+```
 
-## Backend Integration (optional)
+Shared API client:
+- lib/services/api_client.dart (GET/POST with JSON headers and error handling)
 
-This app also contains utilities for optional integration:
+Service endpoints:
+- LessonsService: GET /api/lessons
+- QuizzesService: GET /api/quizzes
+- ProgressService: POST /api/progress
+- TutorService: POST /api/tutor/chat
 
-- Legacy FastAPI backend (in this monorepo)
-  - Base URL via --dart-define FASTAPI_BASE_URL (fallback API_BASE_URL)
-  - Default: http://localhost:8080/api/v1
-  - Client: lib/services/api_client.dart
-  - Example:
-    flutter run --dart-define=FASTAPI_BASE_URL=http://localhost:8080/api/v1
+These services target the base URL from AppEnv.backendBaseUrl and do not hardcode localhost.
 
-- Node.js backend (future)
-  - Base URL via --dart-define NODE_API_BASE_URL
-  - Default: http://localhost:3000
-  - Service: lib/services/api_service.dart
-  - Example:
-    flutter run --dart-define=NODE_API_BASE_URL=http://localhost:3000
+## Example Usage (Development)
 
-## Environment variables
+A minimal wiring example is provided at:
+- lib/example/wiring_example.dart
 
-- Not required for current mock-only experience.
-- See .env.example for future variables.
+You can temporarily call it from main() to verify connectivity:
+```dart
+// import 'package:micro_learning_ai_tutor_frontend/example/wiring_example.dart';
+// await runWiringExample();
+```
+
+Service snippets:
+```dart
+final lessons = await LessonsService().listLessons();
+final quizzes = await QuizzesService().listQuizzes();
+final progressRes = await ProgressService().upsertProgress(
+  userId: 'user-123',
+  lessonId: 'lesson-1',
+  score: 95,
+);
+final chatRes = await TutorService().chat(
+  message: 'Hello tutor!',
+  history: const [{'role':'system','content':'You are a helpful micro-learning tutor.'}],
+);
+```
+
+## Example curl
+
+- Lessons:
+  curl -X GET "$BACKEND_BASE_URL/api/lessons" -H "accept: application/json"
+
+- Quizzes:
+  curl -X GET "$BACKEND_BASE_URL/api/quizzes" -H "accept: application/json"
+
+- Progress:
+  curl -X POST "$BACKEND_BASE_URL/api/progress" \
+    -H "Content-Type: application/json" \
+    -d '{"userId":"user-123","lessonId":"lesson-1","score":88}'
+
+- Tutor Chat:
+  curl -X POST "$BACKEND_BASE_URL/api/tutor/chat" \
+    -H "Content-Type: application/json" \
+    -d '{"message":"Hi tutor! Any tips?","history":[{"role":"system","content":"You are helpful."}]}'
+
+## Running with docker-compose
+
+When using the monorepo docker-compose, the app will target http://backend-api:8080 by default via compose networking. No extra flags required.
+
+## Running locally without compose
+
+If your backend is on localhost:8080:
+- flutter run --dart-define=BACKEND_BASE_URL=http://localhost:8080
+
+## Dependencies
+
+This project uses the http package for networking.
+Declared in pubspec.yaml:
+```yaml
+dependencies:
+  http: ^1.2.2
+```
 
 ## Tests
 
-- Unit tests for ApiService mock integration and basic widget rendering exist.
+- Widget and basic integration tests:
   flutter test --concurrency=1
+
+## Notes
+
+- Avoid hardcoding localhost; always use AppEnv.backendBaseUrl.
+- The wiring example is not part of production UI and should be used only for manual verification.
