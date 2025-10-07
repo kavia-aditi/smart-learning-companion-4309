@@ -115,6 +115,8 @@ Base URL: `http://localhost:8080`
 - PORT=8080
 - NODE_ENV=development
 - CORS_ORIGIN=http://localhost:3000
+  - For docker-compose with the Flutter web frontend served on port 3000, include http://localhost:3000.
+  - For permissive local development you may set CORS_ORIGIN=* (not recommended for production).
 - AI_PROVIDER=ollama
 - OLLAMA_BASE_URL=http://ollama:11434
 - OLLAMA_MODEL=llama3:instruct

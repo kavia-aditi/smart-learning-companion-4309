@@ -1,70 +1,108 @@
-# Project Repository
+# Smart Learning Companion
 
-This repository contains:
+An AI-powered micro learning tutor application that delivers bite-sized lessons and interactive quizzes, with an AI tutor powered by Ollama (default) or OpenAI.
+
+This monorepo contains:
 - micro_learning_ai_tutor_frontend (Flutter)
-- backend (FastAPI) implementing the AI/ML pipeline endpoints
+- backend-api (Node.js + TypeScript, main API used by the Flutter app)
+- backend (Python FastAPI, separate AI/ML pipeline example; not required for the Flutter app)
+- docker-compose.yml (brings up Ollama, backend-api, and the Flutter web frontend)
 
-Quick start:
-1) Backend
-   cd smart-learning-companion-4309/backend
-   pip install -r requirements.txt
-   cp .env.example .env
-   ./run.sh
-   API at http://localhost:8080/api/v1
-
-2) Frontend (Flutter)
-   cd smart-learning-companion-4309/micro_learning_ai_tutor_frontend
-   flutter pub get
-   flutter run
-
-Preview/Manifest:
-- This repo includes a manifest at .kavia/manifest.json registering the Flutter container:
-  name: micro_learning_ai_tutor_frontend
-  type: flutter
-  platform: mobile
-  container_root: smart-learning-companion-4309/micro_learning_ai_tutor_frontend
-  preview_port: 3000
-- Preview systems can use this to auto-start the Flutter web-server on port 3000.
-
-Integration:
-- Frontend uses a minimal ApiClient to authenticate a demo user and list projects.
-- Update API_BASE_URL at build time using --dart-define=API_BASE_URL=http://localhost:8080/api/v1
-
-## Running with Docker Compose
-
-This repository includes a top-level docker-compose.yml to run the backend API and the Flutter frontend together.
+## Quick Start (Docker Compose)
 
 Prerequisites:
-- Docker (https://docs.docker.com/get-docker/)
-- Docker Compose (v2 is included with modern Docker Desktop/Engine)
+- Docker and Docker Compose v2
 
 Steps:
-1) Configure backend environment:
-   - If using the Node.js backend (backend-api), copy its example env to a real one:
-     cp smart-learning-companion-4309/backend-api/.env.example smart-learning-companion-4309/backend-api/.env
-   - Open smart-learning-companion-4309/backend-api/.env and set required values:
-     - OPENAI_API_KEY=your_key_here
-     - Optional: model and other tuning variables as needed
-   - Note: The compose file provides a default PORT=8080 if not set.
+1) Prepare backend-api environment (optional; compose sets sensible defaults)
+   cp smart-learning-companion-4309/backend-api/.env.example smart-learning-companion-4309/backend-api/.env
+   # Optionally adjust values (CORS_ORIGIN, AI_PROVIDER, OLLAMA_* or OpenAI settings)
 
-2) Build and start services:
-   - From the repository root (where docker-compose.yml lives), run:
-     docker compose up --build
+2) Start the stack (from repo root):
+   docker compose up -d --build
 
-3) Access the apps:
-   - Frontend: http://localhost:3000
-   - Backend health: http://localhost:8080/health
+Services:
+- Frontend (Flutter web): http://localhost:3000
+- Backend API (Node/Express): http://localhost:8080
+- Ollama (model endpoint): http://localhost:11434
 
-Networking details:
-- The frontend talks to the backend via the Docker network using API_BASE_URL=http://backend:8080 (configured in compose).
-- Services are attached to the smart-learning-net bridge network and discover each other by service name.
-
-Notes for the Flutter frontend:
-- The docker-compose.yml assumes there is a Dockerfile in:
-  smart-learning-companion-4309/micro_learning_ai_tutor_frontend/Dockerfile
-- If this file does not exist yet, add one (for Flutter web or dev serving) or update compose to use a community Flutter image.
-- Keep the exposed port at 3000 for consistency with the preview and compose mapping.
+Notes about Ollama models:
+- The first request to /api/tutor/chat with a new model (default: llama3:instruct) triggers a model pull that can take several minutes.
+- You can pre-pull the model to speed up first response:
+  docker exec -it ollama ollama pull llama3:instruct
 
 Stopping:
-- Press Ctrl+C in the compose terminal, or run:
-  docker compose down
+- docker compose down
+
+## Quick Start (Develop locally without Docker)
+
+Backend API (Node + TS):
+1) cd smart-learning-companion-4309/backend-api
+2) npm install
+3) cp .env.example .env
+4) npm run dev
+   - Server at http://localhost:8080
+   - Health at http://localhost:8080/health
+
+Flutter Frontend (mobile or web dev):
+1) cd smart-learning-companion-4309/micro_learning_ai_tutor_frontend
+2) flutter pub get
+3) For emulator/device (mobile):
+   flutter run --dart-define=BACKEND_BASE_URL=http://localhost:8080
+4) For web dev:
+   flutter run -d chrome --web-port 3000 --dart-define=BACKEND_BASE_URL=http://localhost:8080
+
+## Endpoints (Backend API)
+
+Base: http://localhost:8080
+
+- GET /health
+- GET /api/lessons
+- GET /api/lessons/:id
+- GET /api/quizzes?lessonId=...
+- POST /api/quizzes/:quizId/submit
+- GET /api/progress/:userId
+- POST /api/progress/:userId
+- POST /api/tutor/chat   (AI provider-based with Ollama default and rules-based fallback)
+
+AI Provider configuration (via env/.env):
+- AI_PROVIDER=ollama (default) | openai
+- OLLAMA_BASE_URL=http://ollama:11434
+- OLLAMA_MODEL=llama3:instruct
+- (OpenAI) OPENAI_API_KEY, OPENAI_MODEL, OPENAI_BASE_URL
+
+CORS:
+- Controlled by CORS_ORIGIN in backend-api; defaults are permissive. Include http://localhost:3000 for web preview.
+
+## Compose Networking Notes
+
+- The Flutter web frontend container is built from micro_learning_ai_tutor_frontend/Dockerfile and served on port 3000 using a tiny static server.
+- The frontend uses BACKEND_BASE_URL set to http://backend:8080 in docker-compose, which resolves to the backend-api service name on the compose network.
+- The Flutter app also supports overriding the base URL via --dart-define=BACKEND_BASE_URL=... at build/run time.
+
+## Repository Structure
+
+smart-learning-companion-4309/
+- micro_learning_ai_tutor_frontend/   (Flutter app; web build used in compose)
+- backend-api/                        (Express + TypeScript backend used by the app)
+- backend/                            (Python FastAPI example; not used by Flutter app)
+- docker-compose.yml                  (Ollama + backend-api + Flutter web)
+- README.md                           (this file)
+
+## Troubleshooting
+
+- Frontend shows network errors:
+  - Ensure BACKEND_BASE_URL points to a reachable URL (http://localhost:8080 locally, or http://backend:8080 in compose).
+  - Verify backend health: curl http://localhost:8080/health
+
+- Tutor chat returns fallback messages:
+  - Ollama model may still be downloading. Pre-pull with:
+    docker exec -it ollama ollama pull llama3:instruct
+  - Check backend logs for provider errors.
+
+- CORS errors (in web dev):
+  - Set backend-api CORS_ORIGIN to include your frontend origin(s), e.g. http://localhost:3000 or use * for permissive local dev.
+
+- Build failures for Flutter Dockerfile:
+  - The Dockerfile uses a public Flutter image; ensure network access during build.
+  - You can also run Flutter locally without Docker as shown above.

@@ -47,8 +47,12 @@ services:
     build:
       context: ./smart-learning-companion-4309/micro_learning_ai_tutor_frontend
       dockerfile: Dockerfile
+      args:
+        # Inject the compose-network URL at build time for Flutter web
+        BACKEND_BASE_URL: "http://backend:8080"
     environment:
-      API_BASE_URL: "http://backend:8080"
+      # Also set at runtime in case app reads from environment in future
+      BACKEND_BASE_URL: "http://backend:8080"
     depends_on:
       - backend
     ports:
