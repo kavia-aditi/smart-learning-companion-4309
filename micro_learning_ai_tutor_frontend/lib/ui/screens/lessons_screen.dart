@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:micro_learning_ai_tutor_frontend/providers/lessons_provider.dart';
+import 'package:micro_learning_ai_tutor_frontend/providers/lessons_provider.dart' as lp;
 import 'package:micro_learning_ai_tutor_frontend/ui/widgets/ocean_card.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/widgets/section_title.dart';
 
 /// PUBLIC_INTERFACE
-class LessonsScreen extends StatelessWidget {
+class LessonsScreen extends ConsumerWidget {
   /// Base screen for Lessons tab. Shows placeholder lesson cards with progress.
   const LessonsScreen({super.key});
 
@@ -28,7 +31,7 @@ class LessonsScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
 
@@ -37,6 +40,7 @@ class LessonsScreen extends StatelessWidget {
       required String title,
       required String duration,
       required String progress,
+      String? selectLessonId,
     }) {
       return OceanCard.standard(
         leading: CircleAvatar(
@@ -47,7 +51,12 @@ class LessonsScreen extends StatelessWidget {
         title: title,
         subtitle: '$duration • Lesson',
         trailing: _progressChip(context, progress),
-        onTap: () {},
+        onTap: () {
+          if (selectLessonId != null) {
+            ref.read(lp.selectedLessonIdProvider.notifier).state = selectLessonId;
+            Navigator.of(context).pushNamed('/lesson-detail');
+          }
+        },
       );
     }
 
@@ -60,23 +69,26 @@ class LessonsScreen extends StatelessWidget {
         const SizedBox(height: 8),
         buildLesson(
           icon: Icons.history_edu_outlined,
-          title: 'Impressionism Art Movement',
-          duration: '7 min',
-          progress: '20%',
+          title: 'World War II Basics',
+          duration: '5 min',
+          progress: '0%',
+          selectLessonId: 'lsn_war2',
         ),
         const SizedBox(height: 12),
         buildLesson(
           icon: Icons.calculate_outlined,
           title: 'Basics of Algebra',
           duration: '8 min',
-          progress: '55%',
+          progress: '0%',
+          selectLessonId: 'lsn_algebra',
         ),
         const SizedBox(height: 12),
         buildLesson(
           icon: Icons.biotech_outlined,
           title: 'Intro to Photosynthesis',
           duration: '6 min',
-          progress: '70%',
+          progress: '0%',
+          selectLessonId: 'lsn_photosyn',
         ),
       ],
     );

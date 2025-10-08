@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:micro_learning_ai_tutor_frontend/theme/app_theme.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/auth/login_screen.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/auth/register_screen.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/dashboard_screen.dart';
-import 'package:micro_learning_ai_tutor_frontend/ui/screens/lessons_screen.dart';
+import 'package:micro_learning_ai_tutor_frontend/ui/screens/lesson_detail_screen.dart';
+import 'package:micro_learning_ai_tutor_frontend/ui/screens/home_screen.dart' as legacy_home;
+import 'package:micro_learning_ai_tutor_frontend/ui/screens/quiz_screen.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/profile_screen.dart';
-import 'package:micro_learning_ai_tutor_frontend/ui/screens/quizzes_screen.dart';
 
 /// PUBLIC_INTERFACE
 void main() {
-  /// App entrypoint. Bootstraps the AI Tutor app with Ocean Professional theme.
-  runApp(const AiTutorApp());
+  /// App entrypoint. Bootstraps the AI Tutor app with ProviderScope for Riverpod.
+  runApp(const ProviderScope(child: AiTutorApp()));
 }
 
 /// PUBLIC_INTERFACE
@@ -28,8 +30,9 @@ class AiTutorApp extends StatelessWidget {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
         '/home': (_) => const AppTabsShell(),
-        '/lessons': (_) => const LessonsScreen(),
-        '/quizzes': (_) => const QuizzesScreen(),
+        '/lessons': (_) => const legacy_home.LessonsScreen(),
+        '/lesson-detail': (_) => const LessonDetailScreen(),
+        '/quiz': (_) => const QuizScreen(),
         '/dashboard': (_) => const DashboardScreen(),
         '/profile': (_) => const ProfileScreen(),
       },
@@ -59,8 +62,8 @@ class _AppTabsShellState extends State<AppTabsShell> {
   @override
   Widget build(BuildContext context) {
     final pages = const <Widget>[
-      LessonsScreen(),
-      QuizzesScreen(),
+      legacy_home.LessonsScreen(),
+      legacy_home.QuizzesScreen(),
       DashboardScreen(),
       ProfileScreen(),
     ];
