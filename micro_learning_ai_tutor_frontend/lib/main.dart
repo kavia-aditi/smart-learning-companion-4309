@@ -10,10 +10,13 @@ import 'package:micro_learning_ai_tutor_frontend/ui/screens/lessons_screen.dart'
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/quizzes_screen.dart';
 
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/profile_screen.dart';
+import 'package:micro_learning_ai_tutor_frontend/state/quiz_progress_seed.dart';
 
 /// PUBLIC_INTERFACE
 void main() {
   /// App entrypoint. Bootstraps the AI Tutor app with ProviderScope for Riverpod.
+  // Fire-and-forget seed; it is idempotent and uses only SharedPreferences.
+  seedQuizAttemptsIfNeeded();
   runApp(const ProviderScope(child: AiTutorApp()));
 }
 
