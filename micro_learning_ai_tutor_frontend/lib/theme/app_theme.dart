@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 class AppTheme {
   /// Build the Ocean Professional light theme used across the app.
   static ThemeData light() {
-    const Color primary = Color(0xFF2563EB);
-    const Color accent = Color(0xFF3B82F6);
-    const Color secondary = Color(0xFFF59E0B);
+    const Color primary = Color(0xFF2563EB); // Blue 600
+    const Color accent = Color(0xFF3B82F6); // Blue 500
+    const Color secondary = Color(0xFFF59E0B); // Amber
     const Color bgCanvas = Color(0xFFF9FAFB);
     const Color surface = Color(0xFFFFFFFF);
     const Color textPrimary = Color(0xFF111827);
@@ -16,21 +16,23 @@ class AppTheme {
     const Color divider = Color(0xFFECECEC);
     const Color chipBg = Color(0xFFF7F7F8);
     const Color chipText = Color(0xFF1F2937);
+    const Color error = Color(0xFFEF4444);
 
-    final base = ThemeData(useMaterial3: true);
+    final base = ThemeData(useMaterial3: true, brightness: Brightness.light);
+    final scheme = ColorScheme.light(
+      primary: primary,
+      secondary: secondary,
+      surface: surface,
+      error: error,
+      onPrimary: Colors.white,
+      onSecondary: Colors.black,
+      onSurface: textPrimary,
+      onError: Colors.white,
+      tertiary: accent,
+    );
+
     return base.copyWith(
-      colorScheme: const ColorScheme(
-        brightness: Brightness.light,
-        primary: primary,
-        onPrimary: Colors.white,
-        secondary: secondary,
-        onSecondary: Colors.black,
-        error: Color(0xFFEF4444),
-        onError: Colors.white,
-        surface: surface,
-        onSurface: textPrimary,
-        tertiary: accent,
-      ),
+      colorScheme: scheme,
       scaffoldBackgroundColor: bgCanvas,
       appBarTheme: const AppBarTheme(
         elevation: 0,
@@ -38,6 +40,24 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         foregroundColor: textPrimary,
         centerTitle: false,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surface,
+        elevation: 1,
+        indicatorColor: primary.withAlpha(24),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: primary);
+          }
+          return IconThemeData(color: textPrimary.withAlpha(180));
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final baseStyle = const TextStyle(fontSize: 12, fontWeight: FontWeight.w600);
+          if (states.contains(WidgetState.selected)) {
+            return baseStyle.copyWith(color: primary);
+          }
+          return baseStyle.copyWith(color: textPrimary.withAlpha(160));
+        }),
       ),
       dividerColor: divider,
       cardTheme: CardTheme(
@@ -71,7 +91,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(9999),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: accent, width: 1.5),
+          borderSide: BorderSide(color: accent, width: 1.5),
           borderRadius: BorderRadius.circular(9999),
         ),
         hintStyle: const TextStyle(color: textMuted),

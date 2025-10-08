@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:micro_learning_ai_tutor_frontend/theme/app_theme.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/auth/login_screen.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/auth/register_screen.dart';
-import 'package:micro_learning_ai_tutor_frontend/ui/screens/home_screen.dart';
+import 'package:micro_learning_ai_tutor_frontend/ui/screens/dashboard_screen.dart';
+import 'package:micro_learning_ai_tutor_frontend/ui/screens/lessons_screen.dart';
+import 'package:micro_learning_ai_tutor_frontend/ui/screens/profile_screen.dart';
+import 'package:micro_learning_ai_tutor_frontend/ui/screens/quizzes_screen.dart';
 
 /// PUBLIC_INTERFACE
 void main() {
@@ -24,8 +27,72 @@ class AiTutorApp extends StatelessWidget {
       routes: {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
-        '/home': (_) => const AppShell(),
+        '/home': (_) => const AppTabsShell(),
+        '/lessons': (_) => const LessonsScreen(),
+        '/quizzes': (_) => const QuizzesScreen(),
+        '/dashboard': (_) => const DashboardScreen(),
+        '/profile': (_) => const ProfileScreen(),
       },
+    );
+  }
+}
+
+/// PUBLIC_INTERFACE
+class AppTabsShell extends StatefulWidget {
+  /// Bottom navigation shell hosting Lessons, Quizzes, Dashboard, Profile.
+  const AppTabsShell({super.key});
+
+  @override
+  State<AppTabsShell> createState() => _AppTabsShellState();
+}
+
+class _AppTabsShellState extends State<AppTabsShell> {
+  int _currentIndex = 0;
+
+  static const _tabTitles = <String>['Lessons', 'Quizzes', 'Dashboard', 'Profile'];
+
+  @override
+  Widget build(BuildContext context) {
+    final pages = const <Widget>[
+      LessonsScreen(),
+      QuizzesScreen(),
+      DashboardScreen(),
+      ProfileScreen(),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_tabTitles[_currentIndex]),
+      ),
+      body: SafeArea(
+        child: IndexedStack(index: _currentIndex, children: pages),
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (i) => setState(() => _currentIndex = i),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book),
+            label: 'Lessons',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.quiz_outlined),
+            selectedIcon: Icon(Icons.quiz),
+            label: 'Quizzes',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.insights_outlined),
+            selectedIcon: Icon(Icons.insights),
+            label: 'Dashboard',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+      ),
     );
   }
 }
