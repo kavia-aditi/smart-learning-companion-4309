@@ -8,7 +8,8 @@ plugins {
 android {
     namespace = "com.example.micro_learning_ai_tutor_frontend"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Pin NDK to satisfy CI environment and Gradle sync
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

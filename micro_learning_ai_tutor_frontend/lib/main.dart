@@ -5,7 +5,9 @@ import 'package:micro_learning_ai_tutor_frontend/ui/screens/auth/login_screen.da
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/auth/register_screen.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/dashboard_screen.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/lesson_detail_screen.dart';
-import 'package:micro_learning_ai_tutor_frontend/ui/screens/home_screen.dart' as legacy_home;
+// Use the dedicated Lessons and Quizzes tab screens
+import 'package:micro_learning_ai_tutor_frontend/ui/screens/lessons_screen.dart';
+import 'package:micro_learning_ai_tutor_frontend/ui/screens/quizzes_screen.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/quiz_screen.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/profile_screen.dart';
 
@@ -30,7 +32,7 @@ class AiTutorApp extends StatelessWidget {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
         '/home': (_) => const AppTabsShell(),
-        '/lessons': (_) => const legacy_home.LessonsScreen(),
+        '/lessons': (_) => const LessonsScreen(),
         '/lesson-detail': (_) => const LessonDetailScreen(),
         '/quiz': (_) => const QuizScreen(),
         '/dashboard': (_) => const DashboardScreen(),
@@ -62,8 +64,8 @@ class _AppTabsShellState extends State<AppTabsShell> {
   @override
   Widget build(BuildContext context) {
     final pages = const <Widget>[
-      legacy_home.LessonsScreen(),
-      legacy_home.QuizzesScreen(),
+      LessonsScreen(),
+      QuizzesScreen(),
       DashboardScreen(),
       ProfileScreen(),
     ];
