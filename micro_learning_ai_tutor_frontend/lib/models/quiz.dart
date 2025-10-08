@@ -7,6 +7,7 @@ class QuizCatalog {
     required this.description,
     required this.difficulty,
     required this.questions,
+    this.category = 'General',
   });
 
   /// Unique id for the quiz.
@@ -23,6 +24,9 @@ class QuizCatalog {
 
   /// The list of questions.
   final List<QuizQuestion> questions;
+
+  /// Category for grouping and analytics filters (e.g., Math, Science, Tech).
+  final String category;
 
   /// Convenience accessor for question count.
   int get questionCount => questions.length;

@@ -13,6 +13,8 @@ class AnalyticsScreen extends ConsumerWidget {
     // Tie to refresher so updates propagate when attempts are recorded.
     ref.watch(quizAnalyticsRefresherProvider);
     final analytics = ref.watch(quizAnalyticsProvider);
+    final filter = ref.watch(analyticsFilterProvider);
+    final categoriesAsync = ref.watch(quizCategoriesProvider);
 
     final t = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
@@ -21,9 +23,14 @@ class AnalyticsScreen extends ConsumerWidget {
       data: (data) {
         final k = data.kpis;
         final hasData = data.perQuiz.any((e) => e.attempts > 0);
+
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
+            // Filter Bar
+            _filterBar(context, ref, categoriesAsync, filter),
+            const SizedBox(height: 12),
+
             const SectionTitle('Progress Overview'),
             const SizedBox(height: 8),
             Wrap(
@@ -42,7 +49,7 @@ class AnalyticsScreen extends ConsumerWidget {
                     '${k.completionRatePct.isNaN ? 0 : k.completionRatePct.toStringAsFixed(0)}%',
                     Icons.task_alt,
                     const Color(0xFF10B981)),
-                _kpiCard(context, 'Last 7 days', '${k.last7DaysCount}', Icons.calendar_today,
+                _kpiCard(context, 'Recent', '${k.recentAttemptsCount}', Icons.calendar_today,
                     Colors.purple),
               ],
             ),
@@ -50,7 +57,7 @@ class AnalyticsScreen extends ConsumerWidget {
             const SectionTitle('Per-Quiz Performance'),
             const SizedBox(height: 8),
             if (!hasData)
-              _emptyState(context)
+              _emptyStateFiltered(context, ref)
             else
               ...data.perQuiz.map((s) => _quizStatTile(context, s)),
           ],
@@ -62,6 +69,170 @@ class AnalyticsScreen extends ConsumerWidget {
         child: Text('Failed to load analytics: $e', style: t.bodyMedium),
       ),
     );
+  }
+
+  Widget _filterBar(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<String>> categoriesAsync,
+    AnalyticsFilter filter,
+  ) {
+    final cs = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.outline),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withAlpha(12), blurRadius: 8, offset: const Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Filters', style: t.titleMedium),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              // Category dropdown
+              Expanded(
+                child: categoriesAsync.when(
+                  data: (cats) {
+                    final items = ['All', ...cats];
+                    final value = filter.category ?? 'All';
+                    return DropdownButtonFormField<String>(
+                      value: items.contains(value) ? value : 'All',
+                      items: items
+                          .map((c) => DropdownMenuItem(
+                                value: c,
+                                child: Text(c),
+                              ))
+                          .toList(),
+                      onChanged: (v) {
+                        // After await rule: this is sync
+                        final category = (v == null || v == 'All') ? null : v;
+                        ref.read(analyticsFilterProvider.notifier).setCategory(category);
+                      },
+                      decoration: const InputDecoration(
+                        hintText: 'Category',
+                      ),
+                    );
+                  },
+                  loading: () => const LinearProgressIndicator(minHeight: 2),
+                  error: (e, _) => Text('Categories error: $e', style: t.bodySmall),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Custom range button
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.date_range),
+                  label: Text(
+                    _rangeLabel(filter.start, filter.end),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onPressed: () async {
+                    final picked = await showDateRangePicker(
+                      context: context,
+                      firstDate: DateTime.now().subtract(const Duration(days: 365 * 5)),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      initialDateRange: DateTimeRange(start: filter.start, end: filter.end),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: Theme.of(context).colorScheme.copyWith(
+                                  primary: const Color(0xFF2563EB),
+                                  onPrimary: Colors.white,
+                                ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (picked != null) {
+                      // After await: only update primitive state via provider
+                      ref
+                          .read(analyticsFilterProvider.notifier)
+                          .setCustomRange(picked.start, picked.end);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _presetChip(context, ref, label: '7d', days: 7,
+                  selected: _isSameRange(filter, days: 7)),
+              _presetChip(context, ref, label: '14d', days: 14,
+                  selected: _isSameRange(filter, days: 14)),
+              _presetChip(context, ref, label: '30d', days: 30,
+                  selected: _isSameRange(filter, days: 30)),
+              _presetChip(context, ref, label: '90d', days: 90,
+                  selected: _isSameRange(filter, days: 90)),
+              _allChip(context, ref, selected: !_isSameRange(filter, days: 7) &&
+                  !_isSameRange(filter, days: 14) &&
+                  !_isSameRange(filter, days: 30) &&
+                  !_isSameRange(filter, days: 90)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isSameRange(AnalyticsFilter filter, {required int days}) {
+    final now = DateTime.now().toUtc();
+    final expectedStart =
+        DateTime.utc(now.year, now.month, now.day).subtract(Duration(days: days - 1));
+    final expectedEnd = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
+    return filter.start == expectedStart && filter.end == expectedEnd;
+  }
+
+  Widget _presetChip(BuildContext context, WidgetRef ref,
+      {required String label, required int days, required bool selected}) {
+    final cs = Theme.of(context).colorScheme;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => ref.read(analyticsFilterProvider.notifier).setPresetDays(days),
+      selectedColor: const Color(0xFFE6F0FF),
+      shape: StadiumBorder(side: BorderSide(color: cs.outline)),
+      backgroundColor: const Color(0xFFF7F7F8),
+      labelStyle: const TextStyle(fontWeight: FontWeight.w700),
+    );
+  }
+
+  Widget _allChip(BuildContext context, WidgetRef ref, {required bool selected}) {
+    final cs = Theme.of(context).colorScheme;
+    return ChoiceChip(
+      label: const Text('All'),
+      selected: selected,
+      onSelected: (_) {
+        // set a wide range to include all (5 years back to future buffer)
+        final now = DateTime.now().toUtc();
+        final start = DateTime.utc(now.year - 5, now.month, now.day);
+        final end = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
+        ref.read(analyticsFilterProvider.notifier).setCustomRange(start, end);
+      },
+      selectedColor: const Color(0xFFE6F0FF),
+      shape: StadiumBorder(side: BorderSide(color: cs.outline)),
+      backgroundColor: const Color(0xFFF7F7F8),
+      labelStyle: const TextStyle(fontWeight: FontWeight.w700),
+    );
+  }
+
+  String _rangeLabel(DateTime start, DateTime end) {
+    String two(int v) => v.toString().padLeft(2, '0');
+    String fmt(DateTime d) => '${d.year}-${two(d.month)}-${two(d.day)}';
+    return '${fmt(start)} to ${fmt(end)}';
   }
 
   Widget _kpiCard(BuildContext context, String title, String value, IconData icon, Color color) {
@@ -208,7 +379,7 @@ class AnalyticsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _emptyState(BuildContext context) {
+  Widget _emptyStateFiltered(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
     return Container(
@@ -220,13 +391,13 @@ class AnalyticsScreen extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.insights_outlined, color: cs.primary),
+          Icon(Icons.filter_alt_off_outlined, color: cs.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('No attempts yet', style: t.bodyLarge),
+              Text('No data for current filters', style: t.bodyLarge),
               const SizedBox(height: 4),
-              Text('Take a quiz to see your analytics here.', style: t.bodySmall),
+              Text('Try widening the date range or selecting All categories.', style: t.bodySmall),
             ]),
           ),
           const SizedBox(width: 8),
@@ -234,9 +405,13 @@ class AnalyticsScreen extends ConsumerWidget {
             height: 40,
             child: ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // go back to tabs
+                final now = DateTime.now().toUtc();
+                final start = DateTime.utc(now.year, now.month, now.day).subtract(const Duration(days: 29));
+                final end = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
+                ref.read(analyticsFilterProvider.notifier).setCategory(null);
+                ref.read(analyticsFilterProvider.notifier).setCustomRange(start, end);
               },
-              child: const Text('Browse Quizzes'),
+              child: const Text('Reset Filters'),
             ),
           ),
         ],

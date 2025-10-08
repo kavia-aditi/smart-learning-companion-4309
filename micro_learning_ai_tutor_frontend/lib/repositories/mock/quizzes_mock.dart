@@ -10,6 +10,7 @@ class MockQuizzesData {
       title: 'World War II Basics',
       description: 'Key events and causes of WWII, distilled for quick recall.',
       difficulty: 'Easy',
+      category: 'History',
       questions: [
         QuizQuestion(
           text: 'In which year did World War II start?',
@@ -42,6 +43,7 @@ class MockQuizzesData {
       title: 'Photosynthesis Essentials',
       description: 'How plants convert light into energy with chlorophyll.',
       difficulty: 'Easy',
+      category: 'Science',
       questions: [
         QuizQuestion(
           text: 'Where does photosynthesis primarily occur?',
@@ -72,6 +74,7 @@ class MockQuizzesData {
       title: 'Algebra Fundamentals',
       description: 'Variables, expressions, and linear equations with confidence.',
       difficulty: 'Medium',
+      category: 'Math',
       questions: [
         QuizQuestion(
           text: 'Solve: x + 5 = 12',
@@ -102,6 +105,7 @@ class MockQuizzesData {
       title: 'Intro to Python',
       description: 'Syntax, print statements, and core data types — fast track.',
       difficulty: 'Easy',
+      category: 'Tech',
       questions: [
         QuizQuestion(
           text: 'How do you print text in Python?',
@@ -132,6 +136,7 @@ class MockQuizzesData {
       title: 'Machine Learning Basics',
       description: 'Core concepts: supervised vs unsupervised, metrics, overfitting.',
       difficulty: 'Medium',
+      category: 'Tech',
       questions: [
         QuizQuestion(
           text: 'Supervised learning uses:',
@@ -177,6 +182,7 @@ class MockQuizzesData {
       title: 'Communication Skills',
       description: 'Craft clarity, listen actively, and reduce misunderstandings.',
       difficulty: 'Easy',
+      category: 'General',
       questions: [
         QuizQuestion(
           text: 'Active listening involves:',
@@ -212,6 +218,7 @@ class MockQuizzesData {
       title: 'World Geography',
       description: 'Capitals, landforms, and landmarks across the globe.',
       difficulty: 'Hard',
+      category: 'Geography',
       questions: [
         QuizQuestion(
           text: 'Capital of Australia?',
@@ -247,6 +254,7 @@ class MockQuizzesData {
       title: 'Chemistry Foundations',
       description: 'Atoms, bonds, and periodic trends with crisp clarity.',
       difficulty: 'Medium',
+      category: 'Science',
       questions: [
         QuizQuestion(
           text: 'What is the atomic number of Carbon?',
@@ -277,6 +285,7 @@ class MockQuizzesData {
       title: 'Physics Fundamentals',
       description: 'Motion, forces, and energy—essentials in minutes.',
       difficulty: 'Medium',
+      category: 'Science',
       questions: [
         QuizQuestion(
           text: 'Newton’s Second Law is:',
@@ -307,6 +316,7 @@ class MockQuizzesData {
       title: 'The Renaissance',
       description: 'Artistic rebirth in Europe: figures, ideas, and impact.',
       difficulty: 'Easy',
+      category: 'History',
       questions: [
         QuizQuestion(
           text: 'The Renaissance began in which region?',
@@ -337,6 +347,7 @@ class MockQuizzesData {
       title: 'Economics Basics',
       description: 'Supply, demand, and incentives that shape decisions.',
       difficulty: 'Medium',
+      category: 'General',
       questions: [
         QuizQuestion(
           text: 'Law of demand: As price increases, quantity demanded:',
@@ -382,6 +393,7 @@ class MockQuizzesData {
       title: 'Cybersecurity Essentials',
       description: 'Passwords, phishing, and safe browsing practices.',
       difficulty: 'Easy',
+      category: 'Tech',
       questions: [
         QuizQuestion(
           text: 'Strong passwords include:',
@@ -427,6 +439,7 @@ class MockQuizzesData {
       title: 'Data Science Overview',
       description: 'From data cleaning to modeling and evaluation.',
       difficulty: 'Medium',
+      category: 'Tech',
       questions: [
         QuizQuestion(
           text: 'A common step before modeling is:',
@@ -462,6 +475,7 @@ class MockQuizzesData {
       title: 'English Grammar',
       description: 'Parts of speech, tenses, and sentence clarity.',
       difficulty: 'Easy',
+      category: 'Language',
       questions: [
         QuizQuestion(
           text: 'Identify the noun: "The cat slept."',
@@ -492,6 +506,7 @@ class MockQuizzesData {
       title: 'Art History Highlights',
       description: 'Movements, masterpieces, and cultural context.',
       difficulty: 'Medium',
+      category: 'History',
       questions: [
         QuizQuestion(
           text: 'Impressionism is associated with:',
@@ -527,6 +542,7 @@ class MockQuizzesData {
       title: 'Environmental Science',
       description: 'Ecosystems, climate, and sustainable choices.',
       difficulty: 'Medium',
+      category: 'Science',
       questions: [
         QuizQuestion(
           text: 'Greenhouse gases include:',
@@ -562,6 +578,7 @@ class MockQuizzesData {
       title: 'Personal Finance Basics',
       description: 'Budgeting, saving, and compound growth.',
       difficulty: 'Easy',
+      category: 'General',
       questions: [
         QuizQuestion(
           text: 'A budget is used to:',
@@ -597,6 +614,7 @@ class MockQuizzesData {
       title: 'Web Development Basics',
       description: 'HTML, CSS, and JavaScript fundamentals for rapid prototyping.',
       difficulty: 'Easy',
+      category: 'Tech',
       questions: [
         QuizQuestion(
           text: 'HTML is primarily for:',
