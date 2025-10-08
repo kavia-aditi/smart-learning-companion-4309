@@ -154,7 +154,33 @@ class AnalyticsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Filters', style: t.titleMedium),
+          Row(
+            children: [
+              Text('Filters', style: t.titleMedium),
+              const SizedBox(width: 8),
+              Builder(builder: (_) {
+                final isPresetSelected = _isThisWeek(filter) ||
+                    _isThisMonth(filter) ||
+                    _isSameRange(filter, days: 7) ||
+                    _isSameRange(filter, days: 14) ||
+                    _isSameRange(filter, days: 30) ||
+                    _isSameRange(filter, days: 90) ||
+                    _isAll(filter);
+                if (!isPresetSelected) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB).withAlpha(20),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFF2563EB)),
+                    ),
+                    child: const Text('Custom', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.w700, fontSize: 12)),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
+            ],
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -235,6 +261,10 @@ class AnalyticsScreen extends ConsumerWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
+              // New presets
+              _weekChip(context, ref, selected: _isThisWeek(filter)),
+              _monthChip(context, ref, selected: _isThisMonth(filter)),
+              // Existing day presets
               _presetChip(context, ref, label: '7d', days: 7,
                   selected: _isSameRange(filter, days: 7)),
               _presetChip(context, ref, label: '14d', days: 14,
@@ -243,10 +273,10 @@ class AnalyticsScreen extends ConsumerWidget {
                   selected: _isSameRange(filter, days: 30)),
               _presetChip(context, ref, label: '90d', days: 90,
                   selected: _isSameRange(filter, days: 90)),
-              _allChip(context, ref, selected: !_isSameRange(filter, days: 7) &&
-                  !_isSameRange(filter, days: 14) &&
-                  !_isSameRange(filter, days: 30) &&
-                  !_isSameRange(filter, days: 90)),
+              // All
+              _allChip(context, ref, selected: _isAll(filter)),
+              // Reset chip
+              _resetChip(context, ref),
             ],
           ),
         ],
@@ -262,54 +292,175 @@ class AnalyticsScreen extends ConsumerWidget {
     return filter.start == expectedStart && filter.end == expectedEnd;
   }
 
+  bool _isThisWeek(AnalyticsFilter filter) {
+    final now = DateTime.now().toUtc();
+    // Find Monday of this week (ISO: Monday=1)
+    final weekday = now.weekday; // 1..7
+    final monday = DateTime.utc(now.year, now.month, now.day).subtract(Duration(days: weekday - 1));
+    final end = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
+    return filter.start == monday && filter.end == end;
+  }
+
+  bool _isThisMonth(AnalyticsFilter filter) {
+    final now = DateTime.now().toUtc();
+    final first = DateTime.utc(now.year, now.month, 1);
+    final end = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
+    return filter.start == first && filter.end == end;
+  }
+
+  bool _isAll(AnalyticsFilter filter) {
+    // Heuristic: All spans >= 5 years from today back
+    final now = DateTime.now().toUtc();
+    final fiveYearsAgo = DateTime.utc(now.year - 5, now.month, now.day);
+    final end = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
+    return filter.start == fiveYearsAgo && filter.end == end;
+  }
+
   Widget _presetChip(BuildContext context, WidgetRef ref,
       {required String label, required int days, required bool selected}) {
     final cs = Theme.of(context).colorScheme;
-    return ChoiceChip(
-      label: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        child: Text(label),
-      ),
+    return Semantics(
+      button: true,
       selected: selected,
-      onSelected: (_) => ref.read(analyticsFilterProvider.notifier).setPresetDays(days),
-      selectedColor: cs.primaryContainer,
-      shape: StadiumBorder(side: BorderSide(color: cs.outline)),
-      backgroundColor: const Color(0xFFF7F7F8),
-      labelStyle: TextStyle(
-        fontWeight: FontWeight.w700,
-        color: selected
-            ? cs.onPrimaryContainer
-            : Theme.of(context).textTheme.bodyMedium!.color,
+      label: 'Preset $label',
+      child: ChoiceChip(
+        label: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          child: Text(label),
+        ),
+        selected: selected,
+        onSelected: (_) => ref.read(analyticsFilterProvider.notifier).setPresetDays(days),
+        selectedColor: const Color(0xFF2563EB), // Ocean primary
+        shape: StadiumBorder(side: BorderSide(color: selected ? const Color(0xFF2563EB) : cs.outline)),
+        backgroundColor: const Color(0xFFF7F7F8),
+        labelStyle: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: selected ? Colors.white : Theme.of(context).textTheme.bodyMedium!.color,
+        ),
+        visualDensity: VisualDensity.standard,
+        materialTapTargetSize: MaterialTapTargetSize.padded,
       ),
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+
+  Widget _weekChip(BuildContext context, WidgetRef ref, {required bool selected}) {
+    final cs = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: 'Preset This week',
+      child: ChoiceChip(
+        label: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          child: Text('This week'),
+        ),
+        selected: selected,
+        onSelected: (_) {
+          final now = DateTime.now().toUtc();
+          final weekday = now.weekday; // Monday=1
+          final start = DateTime.utc(now.year, now.month, now.day).subtract(Duration(days: weekday - 1));
+          final end = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
+          ref.read(analyticsFilterProvider.notifier).applyRange(start, end);
+        },
+        selectedColor: const Color(0xFF2563EB),
+        shape: StadiumBorder(side: BorderSide(color: selected ? const Color(0xFF2563EB) : cs.outline)),
+        backgroundColor: const Color(0xFFF7F7F8),
+        labelStyle: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: selected ? Colors.white : Theme.of(context).textTheme.bodyMedium!.color,
+        ),
+        visualDensity: VisualDensity.standard,
+        materialTapTargetSize: MaterialTapTargetSize.padded,
+      ),
+    );
+  }
+
+  Widget _monthChip(BuildContext context, WidgetRef ref, {required bool selected}) {
+    final cs = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: 'Preset This month',
+      child: ChoiceChip(
+        label: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          child: Text('This month'),
+        ),
+        selected: selected,
+        onSelected: (_) {
+          final now = DateTime.now().toUtc();
+          final start = DateTime.utc(now.year, now.month, 1);
+          final end = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
+          ref.read(analyticsFilterProvider.notifier).applyRange(start, end);
+        },
+        selectedColor: const Color(0xFF2563EB),
+        shape: StadiumBorder(side: BorderSide(color: selected ? const Color(0xFF2563EB) : cs.outline)),
+        backgroundColor: const Color(0xFFF7F7F8),
+        labelStyle: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: selected ? Colors.white : Theme.of(context).textTheme.bodyMedium!.color,
+        ),
+        visualDensity: VisualDensity.standard,
+        materialTapTargetSize: MaterialTapTargetSize.padded,
+      ),
     );
   }
 
   Widget _allChip(BuildContext context, WidgetRef ref, {required bool selected}) {
     final cs = Theme.of(context).colorScheme;
-    return ChoiceChip(
-      label: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 2),
-        child: Text('All'),
-      ),
+    return Semantics(
+      button: true,
       selected: selected,
-      onSelected: (_) {
-        // set a wide range to include all (5 years back to future buffer)
-        final now = DateTime.now().toUtc();
-        final start = DateTime.utc(now.year - 5, now.month, now.day);
-        final end = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
-        ref.read(analyticsFilterProvider.notifier).setCustomRange(start, end);
-      },
-      selectedColor: cs.primaryContainer,
-      shape: StadiumBorder(side: BorderSide(color: cs.outline)),
-      backgroundColor: const Color(0xFFF7F7F8),
-      labelStyle: TextStyle(
-        fontWeight: FontWeight.w700,
-        color: selected ? cs.onPrimaryContainer : Theme.of(context).textTheme.bodyMedium?.color,
+      label: 'Preset All time',
+      child: ChoiceChip(
+        label: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          child: Text('All'),
+        ),
+        selected: selected,
+        onSelected: (_) {
+          // set a wide range to include all (5 years back)
+          final now = DateTime.now().toUtc();
+          final start = DateTime.utc(now.year - 5, now.month, now.day);
+          final end = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
+          ref.read(analyticsFilterProvider.notifier).applyRange(start, end);
+        },
+        selectedColor: const Color(0xFF2563EB),
+        shape: StadiumBorder(side: BorderSide(color: selected ? const Color(0xFF2563EB) : cs.outline)),
+        backgroundColor: const Color(0xFFF7F7F8),
+        labelStyle: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: selected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
+        ),
+        visualDensity: VisualDensity.standard,
+        materialTapTargetSize: MaterialTapTargetSize.padded,
       ),
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+
+  Widget _resetChip(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      label: 'Reset filters',
+      child: ActionChip(
+        avatar: Icon(Icons.refresh, color: cs.primary, size: 18),
+        label: const Text('Reset'),
+        onPressed: () {
+          final now = DateTime.now().toUtc();
+          final start = DateTime.utc(now.year - 5, now.month, now.day);
+          final end = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
+          ref.read(analyticsFilterProvider.notifier).setCategory(null);
+          ref.read(analyticsFilterProvider.notifier).applyRange(start, end);
+        },
+        shape: StadiumBorder(side: BorderSide(color: cs.primary)),
+        backgroundColor: cs.primary.withAlpha(20),
+        labelStyle: TextStyle(
+          color: cs.primary,
+          fontWeight: FontWeight.w800,
+        ),
+        materialTapTargetSize: MaterialTapTargetSize.padded,
+      ),
     );
   }
 

@@ -104,6 +104,15 @@ class AnalyticsFilterNotifier extends AutoDisposeNotifier<AnalyticsFilter> {
   }
 
   // PUBLIC_INTERFACE
+  /// Apply a precomputed [start]/[end] range (UTC or local) without changing persistence.
+  /// This enables quick preset updates like "This week" or "This month".
+  void applyRange(DateTime start, DateTime end) {
+    final s = _startOfDay(start.toUtc());
+    final e = _endOfDay(end.toUtc());
+    state = AnalyticsFilter(start: s, end: e, category: state.category);
+  }
+
+  // PUBLIC_INTERFACE
   void setCategory(String? category) {
     state = AnalyticsFilter(start: state.start, end: state.end, category: category);
   }
