@@ -25,41 +25,95 @@ class AnalyticsScreen extends ConsumerWidget {
         final hasData = data.perQuiz.any((e) => e.attempts > 0);
 
         return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           children: [
             // Filter Bar
             _filterBar(context, ref, categoriesAsync, filter),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             const SectionTitle('Progress Overview'),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _kpiCard(context, 'Quizzes Taken', '${k.totalTaken}', Icons.check_circle,
-                    cs.tertiary),
-                _kpiCard(context, 'Avg Score', '${k.avgScorePct.toStringAsFixed(0)}%',
-                    Icons.analytics_outlined, cs.primary),
-                _kpiCard(context, 'Best Score', '${k.bestScorePct.toStringAsFixed(0)}%',
-                    Icons.emoji_events_outlined, const Color(0xFFF59E0B)),
-                _kpiCard(
-                    context,
-                    'Completion Rate',
-                    '${k.completionRatePct.isNaN ? 0 : k.completionRatePct.toStringAsFixed(0)}%',
-                    Icons.task_alt,
-                    const Color(0xFF10B981)),
-                _kpiCard(context, 'Recent', '${k.recentAttemptsCount}', Icons.calendar_today,
-                    Colors.purple),
-              ],
+            const SizedBox(height: 12),
+
+            // KPI grid with subtle animations
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              child: Wrap(
+                key: ValueKey('${k.totalTaken}-${k.avgScorePct}-${k.bestScorePct}-${k.completionRatePct}-${k.recentAttemptsCount}'),
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  KpiCard(
+                    title: 'Quizzes Taken',
+                    value: '${k.totalTaken}',
+                    icon: Icons.check_circle,
+                    accent: cs.tertiary,
+                  ),
+                  KpiCard(
+                    title: 'Avg Score',
+                    value: '${k.avgScorePct.toStringAsFixed(0)}%',
+                    icon: Icons.analytics_outlined,
+                    accent: cs.primary,
+                  ),
+                  const KpiCard(
+                    title: 'Best Score',
+                    value: null, // placeholder; value set later by build method
+                    icon: Icons.emoji_events_outlined,
+                    accent: Color(0xFFF59E0B),
+                  ),
+                  KpiCard(
+                    title: 'Completion Rate',
+                    value: '${k.completionRatePct.isNaN ? 0 : k.completionRatePct.toStringAsFixed(0)}%',
+                    icon: Icons.task_alt,
+                    accent: const Color(0xFF10B981),
+                  ),
+                  const KpiCard(
+                    title: 'Recent',
+                    value: null, // placeholder; value set later by build method
+                    icon: Icons.calendar_today,
+                    accent: Color(0xFF7C3AED), // purple-600
+                  ),
+                ].map((w) {
+                  // inject the dynamic values for const placeholders
+                  if (w.title == 'Best Score') {
+                    return KpiCard(
+                      title: w.title,
+                      value: '${k.bestScorePct.toStringAsFixed(0)}%',
+                      icon: w.icon,
+                      accent: w.accent,
+                    );
+                  }
+                  if (w.title == 'Recent') {
+                    return KpiCard(
+                      title: w.title,
+                      value: '${k.recentAttemptsCount}',
+                      icon: w.icon,
+                      accent: w.accent,
+                    );
+                  }
+                  return w;
+                }).toList(),
+              ),
             ),
-            const SizedBox(height: 16),
+
+            const SizedBox(height: 20),
             const SectionTitle('Per-Quiz Performance'),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
+
             if (!hasData)
               _emptyStateFiltered(context, ref)
             else
-              ...data.perQuiz.map((s) => _quizStatTile(context, s)),
+              // Animated list-like appearance for per-quiz tiles
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: Column(
+                  key: ValueKey('${filter.category}-${filter.start}-${filter.end}-${data.perQuiz.length}'),
+                  children: data.perQuiz
+                      .map((s) => _quizStatTile(context, s))
+                      .toList(),
+                ),
+              ),
           ],
         );
       },
@@ -81,20 +135,27 @@ class AnalyticsScreen extends ConsumerWidget {
     final t = Theme.of(context).textTheme;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0x1A2563EB), // primary @ 10%
+            Color(0xFFFFFEFE), // near white
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cs.outline),
         boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(12), blurRadius: 8, offset: const Offset(0, 3)),
+          BoxShadow(color: Colors.black.withAlpha(12), blurRadius: 8, offset: const Offset(0, 2)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Filters', style: t.titleMedium),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: [
               // Category dropdown
@@ -130,7 +191,7 @@ class AnalyticsScreen extends ConsumerWidget {
                   error: (e, _) => Text('Categories error: $e', style: t.bodySmall),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               // Custom range button
               SizedBox(
                 height: 48,
@@ -169,10 +230,10 @@ class AnalyticsScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 10,
+            runSpacing: 10,
             children: [
               _presetChip(context, ref, label: '7d', days: 7,
                   selected: _isSameRange(filter, days: 7)),
@@ -205,20 +266,33 @@ class AnalyticsScreen extends ConsumerWidget {
       {required String label, required int days, required bool selected}) {
     final cs = Theme.of(context).colorScheme;
     return ChoiceChip(
-      label: Text(label),
+      label: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Text(label),
+      ),
       selected: selected,
       onSelected: (_) => ref.read(analyticsFilterProvider.notifier).setPresetDays(days),
-      selectedColor: const Color(0xFFE6F0FF),
+      selectedColor: cs.primaryContainer,
       shape: StadiumBorder(side: BorderSide(color: cs.outline)),
       backgroundColor: const Color(0xFFF7F7F8),
-      labelStyle: const TextStyle(fontWeight: FontWeight.w700),
+      labelStyle: TextStyle(
+        fontWeight: FontWeight.w700,
+        color: selected
+            ? cs.onPrimaryContainer
+            : Theme.of(context).textTheme.bodyMedium!.color,
+      ),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
   Widget _allChip(BuildContext context, WidgetRef ref, {required bool selected}) {
     final cs = Theme.of(context).colorScheme;
     return ChoiceChip(
-      label: const Text('All'),
+      label: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 2),
+        child: Text('All'),
+      ),
       selected: selected,
       onSelected: (_) {
         // set a wide range to include all (5 years back to future buffer)
@@ -227,10 +301,15 @@ class AnalyticsScreen extends ConsumerWidget {
         final end = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
         ref.read(analyticsFilterProvider.notifier).setCustomRange(start, end);
       },
-      selectedColor: const Color(0xFFE6F0FF),
+      selectedColor: cs.primaryContainer,
       shape: StadiumBorder(side: BorderSide(color: cs.outline)),
       backgroundColor: const Color(0xFFF7F7F8),
-      labelStyle: const TextStyle(fontWeight: FontWeight.w700),
+      labelStyle: TextStyle(
+        fontWeight: FontWeight.w700,
+        color: selected ? cs.onPrimaryContainer : Theme.of(context).textTheme.bodyMedium?.color,
+      ),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
@@ -240,47 +319,7 @@ class AnalyticsScreen extends ConsumerWidget {
     return '${fmt(start)} to ${fmt(end)}';
   }
 
-  Widget _kpiCard(BuildContext context, String title, String value, IconData icon, Color color) {
-    final cs = Theme.of(context).colorScheme;
-    final t = Theme.of(context).textTheme;
-    return Container(
-      width: (MediaQuery.of(context).size.width - 16 * 2 - 12) / 2, // 2 per row on phones
-      constraints: const BoxConstraints(minWidth: 150),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        border: Border.all(color: cs.outline),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(12),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: color.withAlpha(24),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: t.bodySmall),
-                const SizedBox(height: 4),
-                Text(value, style: t.titleMedium),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _quizStatTile(BuildContext context, PerQuizStat s) {
     final cs = Theme.of(context).colorScheme;
@@ -288,80 +327,100 @@ class AnalyticsScreen extends ConsumerWidget {
     final avgPct = s.avgScorePct.isNaN ? 0.0 : s.avgScorePct;
     final bestPct = s.bestScorePct.isNaN ? 0.0 : s.bestScorePct;
     final lastPct = s.lastScorePct.isNaN ? 0.0 : s.lastScorePct;
-    return Container(
+
+    // Category color accent
+    final String cat = s.quiz.category ?? '';
+    final Color accentBar = (cat.toLowerCase() == 'stem')
+        ? cs.primary
+        : (cat.toLowerCase() == 'humanities')
+            ? const Color(0xFFF59E0B)
+            : cs.tertiary;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cs.outline),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 6,
+            color: Colors.black.withAlpha(10),
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(
-          children: [
-            Expanded(child: Text(s.quiz.title, style: t.bodyLarge)),
-            _pill(context, '${s.attempts} attempts',
-                color: cs.tertiary, bg: cs.tertiary.withAlpha(24)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            _miniBar(context, label: 'Avg', valuePct: avgPct / 100.0, color: cs.primary),
-            const SizedBox(width: 8),
-            _miniBar(context, label: 'Best', valuePct: bestPct / 100.0, color: const Color(0xFFF59E0B)),
-            const SizedBox(width: 8),
-            _miniBar(context, label: 'Last', valuePct: lastPct / 100.0, color: const Color(0xFF10B981)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Text('Avg ${avgPct.toStringAsFixed(0)}%', style: t.bodySmall),
-            const SizedBox(width: 12),
-            Text('Best ${bestPct.toStringAsFixed(0)}%', style: t.bodySmall),
-            const SizedBox(width: 12),
-            if (s.completedOnce)
-              _pill(context, 'Completed', color: const Color(0xFF10B981),
-                  bg: const Color(0xFF10B981).withAlpha(24))
-            else
-              Text('Not completed yet', style: t.bodySmall),
-          ],
-        )
-      ]),
-    );
-  }
-
-  Widget _miniBar(BuildContext context,
-      {required String label, required double valuePct, required Color color}) {
-    final t = Theme.of(context).textTheme;
-    final clamped = valuePct.clamp(0.0, 1.0);
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(label, style: t.bodySmall),
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: SizedBox(
-              height: 10,
-              child: Stack(
-                children: [
-                  Container(color: const Color(0xFFF3F4F6)),
-                  FractionallySizedBox(
-                    widthFactor: clamped,
-                    child: Container(color: color),
-                  ),
-                ],
+          // Left accent bar
+          Container(
+            width: 4,
+            height: 88,
+            decoration: BoxDecoration(
+              color: accentBar,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
               ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(4, 14, 14, 14),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        s.quiz.title,
+                        style: t.titleMedium,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _pill(context, '${s.attempts} attempts',
+                        color: cs.tertiary, bg: cs.tertiary.withAlpha(24)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    SparkBar(label: 'Avg', valuePct: (avgPct / 100.0), color: cs.primary),
+                    const SizedBox(width: 10),
+                    const SparkBar(label: 'Best', valuePct: null, color: Color(0xFFF59E0B)),
+                    const SizedBox(width: 10),
+                    const SparkBar(label: 'Last', valuePct: null, color: Color(0xFF10B981)),
+                  ].map((w) {
+                    if (w is SparkBar && w.label == 'Best') {
+                      return SparkBar(label: 'Best', valuePct: (bestPct / 100.0), color: w.color);
+                    }
+                    if (w is SparkBar && w.label == 'Last') {
+                      return SparkBar(label: 'Last', valuePct: (lastPct / 100.0), color: w.color);
+                    }
+                    return w;
+                  }).toList(),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text('Avg ${avgPct.toStringAsFixed(0)}%', style: t.bodySmall),
+                    Text('Best ${bestPct.toStringAsFixed(0)}%', style: t.bodySmall),
+                    if (s.completedOnce)
+                      _pill(context, 'Completed',
+                          color: const Color(0xFF10B981),
+                          bg: const Color(0xFF10B981).withAlpha(24))
+                    else
+                      Text('Not completed yet', style: t.bodySmall),
+                  ],
+                ),
+              ]),
             ),
           ),
         ],
@@ -369,9 +428,11 @@ class AnalyticsScreen extends ConsumerWidget {
     );
   }
 
+
+
   Widget _pill(BuildContext context, String text, {required Color color, required Color bg}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(999),
@@ -391,32 +452,190 @@ class AnalyticsScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cs.outline),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
       ),
       child: Row(
         children: [
-          Icon(Icons.filter_alt_off_outlined, color: cs.primary),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: cs.primary.withAlpha(20),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.filter_alt_off_outlined, color: cs.primary),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('No data for current filters', style: t.bodyLarge),
+              Text('No data for current filters', style: t.titleMedium),
               const SizedBox(height: 4),
-              Text('Try widening the date range or selecting All categories.', style: t.bodySmall),
+              Text(
+                'Try widening the date range or selecting All categories.',
+                style: t.bodySmall,
+              ),
             ]),
           ),
           const SizedBox(width: 8),
           SizedBox(
-            height: 40,
+            height: 44,
             child: ElevatedButton(
               onPressed: () {
                 final now = DateTime.now().toUtc();
-                final start = DateTime.utc(now.year, now.month, now.day).subtract(const Duration(days: 29));
-                final end = DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
+                final start = DateTime.utc(now.year, now.month, now.day)
+                    .subtract(const Duration(days: 29));
+                final end =
+                    DateTime.utc(now.year, now.month, now.day, 23, 59, 59, 999);
                 ref.read(analyticsFilterProvider.notifier).setCategory(null);
                 ref.read(analyticsFilterProvider.notifier).setCustomRange(start, end);
               },
               child: const Text('Reset Filters'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// PUBLIC_INTERFACE
+/// KPI Card reusable widget to standardize KPI tiles styling and layout.
+class KpiCard extends StatelessWidget {
+  const KpiCard({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.accent,
+  });
+
+  final String title;
+  final String? value;
+  final IconData icon;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+
+    final double tileWidth =
+        (MediaQuery.of(context).size.width - 20 * 2 - 16) / 2; // 2 per row on phones
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      width: tileWidth.clamp(150, 400),
+      constraints: const BoxConstraints(minWidth: 150),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accent.withAlpha(16),
+            const Color(0xFFF9FAFB),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outline),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(12),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: accent.withAlpha(28),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: accent, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: t.bodySmall?.copyWith(
+                      color: const Color(0xFF111827),
+                    )),
+                const SizedBox(height: 4),
+                Text(
+                  value ?? '',
+                  style: t.displaySmall?.copyWith(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF111827),
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// PUBLIC_INTERFACE
+/// Compact spark bar with rounded corners and animated width for value changes.
+class SparkBar extends StatelessWidget {
+  const SparkBar({
+    super.key,
+    required this.label,
+    required this.valuePct,
+    required this.color,
+  });
+
+  final String label;
+  final double? valuePct;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final double clamped = (valuePct ?? 0).clamp(0.0, 1.0);
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: t.bodySmall),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: SizedBox(
+              height: 10,
+              child: Stack(
+                children: [
+                  Container(color: const Color(0xFFF3F4F6)),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FractionallySizedBox(
+                      widthFactor: clamped,
+                      alignment: Alignment.centerLeft,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutCubic,
+                        width: double.infinity,
+                        color: color,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
