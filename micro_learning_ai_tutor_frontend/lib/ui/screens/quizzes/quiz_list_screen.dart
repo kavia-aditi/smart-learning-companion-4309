@@ -82,13 +82,14 @@ class _QuizListScreenState extends State<QuizListScreen> {
               MaterialPageRoute(
                 builder: (_) => QuizDetailScreen(
                   quizId: quiz.id,
-                  onCompleted: (score, total) async {
+                  onCompleted: (score, total, durationMs) async {
                     final store = _store ?? await QuizProgressStore.create();
                     await store.saveResult(
                       quizId: quiz.id,
                       lastScore: score,
                       total: total,
                       completed: true,
+                      durationMs: durationMs,
                     );
                     if (mounted) {
                       setState(() {}); // refresh card state
@@ -151,7 +152,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
                           MaterialPageRoute(
                             builder: (_) => QuizDetailScreen(
                               quizId: quiz.id,
-                              onCompleted: (score, total) async {
+                              onCompleted: (score, total, durationMs) async {
                                 final store =
                                     _store ?? await QuizProgressStore.create();
                                 await store.saveResult(
@@ -159,6 +160,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
                                   lastScore: score,
                                   total: total,
                                   completed: true,
+                                  durationMs: durationMs,
                                 );
                                 if (mounted) {
                                   setState(() {});
@@ -194,8 +196,8 @@ class QuizDetailScreen extends StatefulWidget {
 
   final String quizId;
 
-  /// Callback invoked when the quiz finishes with [score] and [total].
-  final void Function(int score, int total) onCompleted;
+  /// Callback invoked when the quiz finishes with [score], [total], [durationMs].
+  final void Function(int score, int total, int durationMs) onCompleted;
 
   @override
   State<QuizDetailScreen> createState() => _QuizDetailScreenState();
@@ -204,6 +206,13 @@ class QuizDetailScreen extends StatefulWidget {
 class _QuizDetailScreenState extends State<QuizDetailScreen> {
   int _current = 0;
   int _correct = 0;
+  late final DateTime _startedAt;
+
+  @override
+  void initState() {
+    super.initState();
+    _startedAt = DateTime.now().toUtc();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -254,7 +263,9 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
                             score: _correct,
                             total: quiz.questionCount,
                             onDone: () {
-                              widget.onCompleted(_correct, quiz.questionCount);
+                              final durationMs =
+                                  DateTime.now().toUtc().difference(_startedAt).inMilliseconds;
+                              widget.onCompleted(_correct, quiz.questionCount, durationMs);
                               Navigator.of(context).pop();
                             },
                           ),
