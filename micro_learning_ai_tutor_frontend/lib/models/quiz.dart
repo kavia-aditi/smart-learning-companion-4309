@@ -1,21 +1,55 @@
 /// PUBLIC_INTERFACE
-class Quiz {
-  /// Quiz question tied to a lesson.
-  Quiz({
+class QuizCatalog {
+  /// Represents a full quiz with multiple questions and metadata.
+  QuizCatalog({
     required this.id,
-    required this.lessonId,
-    required this.question,
+    required this.title,
+    required this.description,
+    required this.difficulty,
+    required this.questions,
+  });
+
+  /// Unique id for the quiz.
+  final String id;
+
+  /// Title for the quiz card.
+  final String title;
+
+  /// Short description shown in the card/list.
+  final String description;
+
+  /// Difficulty string (Easy, Medium, Hard).
+  final String difficulty;
+
+  /// The list of questions.
+  final List<QuizQuestion> questions;
+
+  /// Convenience accessor for question count.
+  int get questionCount => questions.length;
+}
+
+/// PUBLIC_INTERFACE
+class QuizQuestion {
+  /// A single multiple-choice question.
+  QuizQuestion({
+    required this.text,
     required this.options,
     required this.correctIndex,
     this.explanation,
   });
 
-  final String id;
-  final String lessonId;
-  final String question;
+  /// The question text.
+  final String text;
+
+  /// Options to pick from.
   final List<String> options;
+
+  /// Index of the correct answer in [options].
   final int correctIndex;
+
+  /// Optional explanation to show after answering or on review.
   final String? explanation;
 
+  /// Returns true if [index] is the correct choice.
   bool isCorrect(int index) => index == correctIndex;
 }

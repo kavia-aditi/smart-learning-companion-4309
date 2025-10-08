@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:micro_learning_ai_tutor_frontend/models/lesson.dart';
 import 'package:micro_learning_ai_tutor_frontend/providers/lessons_provider.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/widgets/lesson_card.dart';
 

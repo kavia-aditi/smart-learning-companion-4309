@@ -8,7 +8,7 @@ import 'package:micro_learning_ai_tutor_frontend/ui/screens/lesson_detail_screen
 // Use the dedicated Lessons and Quizzes tab screens
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/lessons_screen.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/quizzes_screen.dart';
-import 'package:micro_learning_ai_tutor_frontend/ui/screens/quiz_screen.dart';
+
 import 'package:micro_learning_ai_tutor_frontend/ui/screens/profile_screen.dart';
 
 /// PUBLIC_INTERFACE
@@ -34,7 +34,7 @@ class AiTutorApp extends StatelessWidget {
         '/home': (_) => const AppTabsShell(),
         '/lessons': (_) => const LessonsScreen(),
         '/lesson-detail': (_) => const LessonDetailScreen(),
-        '/quiz': (_) => const QuizScreen(),
+
         '/dashboard': (_) => const DashboardScreen(),
         '/profile': (_) => const ProfileScreen(),
       },
