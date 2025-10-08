@@ -25,7 +25,9 @@ class QuizCatalog {
   /// The list of questions.
   final List<QuizQuestion> questions;
 
-  /// Category for grouping and analytics filters (e.g., Math, Science, Tech).
+  /// Category for grouping and analytics filters.
+  /// Allowed values in this app: "STEM" or "Humanities".
+  /// Note: This remains a plain String for backward compatibility (no enum to avoid breaking changes).
   final String category;
 
   /// Convenience accessor for question count.

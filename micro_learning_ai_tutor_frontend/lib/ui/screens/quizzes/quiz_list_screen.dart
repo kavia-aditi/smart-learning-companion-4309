@@ -219,7 +219,7 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
     final cs = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
 
-    final quiz = MockQuizUtils.find(widget.quizId);
+    final quiz = MockQuizzesUtils.findById(widget.quizId);
     if (quiz == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Quiz')),
@@ -357,15 +357,6 @@ class QuizResultScreen extends StatelessWidget {
   }
 }
 
-class MockQuizUtils {
-  static find(String id) {
-    return MockQuizzesData.quizzes
-        .where((q) => q.id == id)
-        .cast()
-        .firstOrNull;
-  }
-}
 
-extension _FirstOrNull<E> on Iterable<E> {
-  E? get firstOrNull => isEmpty ? null : first;
-}
+
+

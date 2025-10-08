@@ -124,12 +124,25 @@ final analyticsFilterProvider =
 final quizCategoriesProvider = FutureProvider<List<String>>((ref) async {
   final repo = ref.watch(_quizRepoProvider);
   final quizzes = await repo.getAllQuizzes();
+
+  // Collect unique categories present
   final set = <String>{};
   for (final q in quizzes) {
     set.add(q.category);
   }
-  final list = set.toList()..sort();
-  return list;
+
+  // Normalize to ensure STEM/Humanities exist if present in data
+  // Order requirement: ["All","STEM","Humanities", ...others alpha]
+  final List<String> prioritized = [];
+  if (set.contains('STEM')) prioritized.add('STEM');
+  if (set.contains('Humanities')) prioritized.add('Humanities');
+
+  // Remaining custom categories (if any)
+  final others = set.difference({'STEM', 'Humanities'}).toList()..sort();
+
+  // Do not include "All" here; UI will prepend it as a control label.
+  final result = [...prioritized, ...others];
+  return result;
 });
 
 /// PUBLIC_INTERFACE

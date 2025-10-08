@@ -10,7 +10,7 @@ class MockQuizzesData {
       title: 'World War II Basics',
       description: 'Key events and causes of WWII, distilled for quick recall.',
       difficulty: 'Easy',
-      category: 'History',
+      category: 'Humanities',
       questions: [
         QuizQuestion(
           text: 'In which year did World War II start?',
@@ -43,7 +43,7 @@ class MockQuizzesData {
       title: 'Photosynthesis Essentials',
       description: 'How plants convert light into energy with chlorophyll.',
       difficulty: 'Easy',
-      category: 'Science',
+      category: 'STEM',
       questions: [
         QuizQuestion(
           text: 'Where does photosynthesis primarily occur?',
@@ -74,7 +74,7 @@ class MockQuizzesData {
       title: 'Algebra Fundamentals',
       description: 'Variables, expressions, and linear equations with confidence.',
       difficulty: 'Medium',
-      category: 'Math',
+      category: 'STEM',
       questions: [
         QuizQuestion(
           text: 'Solve: x + 5 = 12',
@@ -105,7 +105,7 @@ class MockQuizzesData {
       title: 'Intro to Python',
       description: 'Syntax, print statements, and core data types — fast track.',
       difficulty: 'Easy',
-      category: 'Tech',
+      category: 'STEM',
       questions: [
         QuizQuestion(
           text: 'How do you print text in Python?',
@@ -182,7 +182,7 @@ class MockQuizzesData {
       title: 'Communication Skills',
       description: 'Craft clarity, listen actively, and reduce misunderstandings.',
       difficulty: 'Easy',
-      category: 'General',
+      category: 'Humanities',
       questions: [
         QuizQuestion(
           text: 'Active listening involves:',
@@ -218,7 +218,7 @@ class MockQuizzesData {
       title: 'World Geography',
       description: 'Capitals, landforms, and landmarks across the globe.',
       difficulty: 'Hard',
-      category: 'Geography',
+      category: 'Humanities',
       questions: [
         QuizQuestion(
           text: 'Capital of Australia?',
@@ -475,7 +475,7 @@ class MockQuizzesData {
       title: 'English Grammar',
       description: 'Parts of speech, tenses, and sentence clarity.',
       difficulty: 'Easy',
-      category: 'Language',
+      category: 'Humanities',
       questions: [
         QuizQuestion(
           text: 'Identify the noun: "The cat slept."',
@@ -649,4 +649,17 @@ class MockQuizzesData {
 
 extension _FirstOrNull<E> on Iterable<E> {
   E? get firstOrNull => isEmpty ? null : first;
+}
+
+/// PUBLIC_INTERFACE
+/// Utility functions related to mock quizzes dataset.
+class MockQuizzesUtils {
+  /// PUBLIC_INTERFACE
+  /// Find a quiz by id or return null.
+  static QuizCatalog? findById(String id) {
+    return MockQuizzesData.quizzes
+        .where((q) => q.id == id)
+        .cast<QuizCatalog?>()
+        .firstOrNull;
+  }
 }

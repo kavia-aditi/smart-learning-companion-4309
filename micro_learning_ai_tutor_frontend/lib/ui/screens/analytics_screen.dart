@@ -101,7 +101,12 @@ class AnalyticsScreen extends ConsumerWidget {
               Expanded(
                 child: categoriesAsync.when(
                   data: (cats) {
-                    final items = ['All', ...cats];
+                    // Ensure desired order: ["All","STEM","Humanities", ...others]
+                    final base = <String>[];
+                    if (cats.contains('STEM')) base.add('STEM');
+                    if (cats.contains('Humanities')) base.add('Humanities');
+                    final others = cats.where((c) => c != 'STEM' && c != 'Humanities').toList();
+                    final items = ['All', ...base, ...others];
                     final value = filter.category ?? 'All';
                     return DropdownButtonFormField<String>(
                       value: items.contains(value) ? value : 'All',
