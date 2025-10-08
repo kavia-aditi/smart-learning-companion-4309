@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:micro_learning_ai_tutor_frontend/models/quiz.dart';
+import 'package:micro_learning_ai_tutor_frontend/models/quiz_attempt.dart';
 import 'package:micro_learning_ai_tutor_frontend/repositories/mock/mock_quiz_repository.dart';
 import 'package:micro_learning_ai_tutor_frontend/state/quiz_progress_store.dart';
 
@@ -53,6 +54,16 @@ class QuizKpis {
   final double bestScorePct;
   final double completionRatePct;
   final int recentAttemptsCount;
+
+  /// PUBLIC_INTERFACE
+  /// Returns a serializable map for export JSON.
+  Map<String, dynamic> toMap() => {
+        'totalTaken': totalTaken,
+        'avgScorePct': avgScorePct,
+        'bestScorePct': bestScorePct,
+        'completionRatePct': completionRatePct,
+        'recentAttemptsCount': recentAttemptsCount,
+      };
 }
 
 class PerQuizStat {
@@ -71,6 +82,19 @@ class PerQuizStat {
   final double bestScorePct;
   final double avgScorePct;
   final bool completedOnce;
+
+  /// PUBLIC_INTERFACE
+  /// Returns a serializable map for export JSON.
+  Map<String, dynamic> toMap() => {
+        'quizId': quiz.id,
+        'quizTitle': quiz.title,
+        'category': quiz.category,
+        'attempts': attempts,
+        'lastScorePct': lastScorePct,
+        'bestScorePct': bestScorePct,
+        'avgScorePct': avgScorePct,
+        'completedOnce': completedOnce,
+      };
 }
 
 class QuizAnalytics {
@@ -262,3 +286,43 @@ class QuizAnalyticsRefresher extends AutoDisposeNotifier<int> {
 final quizAnalyticsRefresherProvider =
     AutoDisposeNotifierProvider<QuizAnalyticsRefresher, int>(
         QuizAnalyticsRefresher.new);
+
+/// PUBLIC_INTERFACE
+/// Returns flattened list of attempts filtered by current [analyticsFilterProvider].
+final filteredAttemptsProvider =
+    FutureProvider.autoDispose<List<QuizAttempt>>((ref) async {
+  final repo = ref.watch(_quizRepoProvider);
+  final quizzes = await repo.getAllQuizzes();
+  final store = await ref.watch(quizProgressStoreProvider.future);
+  final filter = ref.watch(analyticsFilterProvider);
+
+  final filteredQuizIds = filter.category == null
+      ? quizzes.map((q) => q.id).toList()
+      : quizzes.where((q) => q.category == filter.category).map((q) => q.id).toList();
+
+  final List<QuizAttempt> out = [];
+  for (final id in filteredQuizIds) {
+    final attempts = store.getAttempts(id).where(
+      (a) => _within(a.timestamp, filter.start, filter.end),
+    );
+    out.addAll(attempts);
+  }
+  // Sort descending by timestamp for convenience
+  out.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+  return out;
+});
+
+/// PUBLIC_INTERFACE
+/// Returns per-quiz stats in a plain map format for export (reflects current filters).
+final perQuizStatsMapProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final analytics = await ref.watch(quizAnalyticsProvider.future);
+  return analytics.perQuiz.map((s) => s.toMap()).toList();
+});
+
+/// PUBLIC_INTERFACE
+/// Returns KPI values in a plain map format for export (reflects current filters).
+final kpisMapProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+  final analytics = await ref.watch(quizAnalyticsProvider.future);
+  return analytics.kpis.toMap();
+});

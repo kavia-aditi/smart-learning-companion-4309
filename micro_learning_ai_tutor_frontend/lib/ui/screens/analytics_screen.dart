@@ -1,7 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:micro_learning_ai_tutor_frontend/providers/quiz_analytics_provider.dart';
 import 'package:micro_learning_ai_tutor_frontend/ui/widgets/section_title.dart';
+import 'package:micro_learning_ai_tutor_frontend/utils/export_utils.dart';
+
+enum _ExportType { csv, json }
 
 /// PUBLIC_INTERFACE
 class AnalyticsScreen extends ConsumerWidget {
@@ -157,6 +163,31 @@ class AnalyticsScreen extends ConsumerWidget {
           Row(
             children: [
               Text('Filters', style: t.titleMedium),
+              const SizedBox(width: 8),
+              PopupMenuButton<_ExportType>(
+                tooltip: 'Export',
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: _ExportType.csv,
+                    child: Text('Export CSV'),
+                  ),
+                  PopupMenuItem(
+                    value: _ExportType.json,
+                    child: Text('Export JSON'),
+                  ),
+                ],
+                onSelected: (type) async {
+                  // Kick off export without using BuildContext across async gap.
+                  await _onExportPressed(ref, type, filter, onDone: (path, message) {
+                    // Schedule UI feedback safely in next frame.
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _showSnack(context, message ?? (path != null ? 'Saved to: $path' : 'Export completed'));
+                    });
+                  });
+                },
+                icon: const Icon(Icons.more_vert),
+              ),
               const SizedBox(width: 8),
               Builder(builder: (_) {
                 final isPresetSelected = _isThisWeek(filter) ||
@@ -319,6 +350,7 @@ class AnalyticsScreen extends ConsumerWidget {
   Widget _presetChip(BuildContext context, WidgetRef ref,
       {required String label, required int days, required bool selected}) {
     final cs = Theme.of(context).colorScheme;
+    final defaultTextColor = Theme.of(context).textTheme.bodyMedium!.color!;
     return Semantics(
       button: true,
       selected: selected,
@@ -335,7 +367,7 @@ class AnalyticsScreen extends ConsumerWidget {
         backgroundColor: const Color(0xFFF7F7F8),
         labelStyle: TextStyle(
           fontWeight: FontWeight.w700,
-          color: selected ? Colors.white : Theme.of(context).textTheme.bodyMedium!.color,
+          color: selected ? Colors.white : defaultTextColor,
         ),
         visualDensity: VisualDensity.standard,
         materialTapTargetSize: MaterialTapTargetSize.padded,
@@ -430,7 +462,7 @@ class AnalyticsScreen extends ConsumerWidget {
         backgroundColor: const Color(0xFFF7F7F8),
         labelStyle: TextStyle(
           fontWeight: FontWeight.w700,
-          color: selected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
+          color: selected ? Colors.white : Theme.of(context).textTheme.bodyMedium!.color,
         ),
         visualDensity: VisualDensity.standard,
         materialTapTargetSize: MaterialTapTargetSize.padded,
@@ -468,6 +500,70 @@ class AnalyticsScreen extends ConsumerWidget {
     String two(int v) => v.toString().padLeft(2, '0');
     String fmt(DateTime d) => '${d.year}-${two(d.month)}-${two(d.day)}';
     return '${fmt(start)} to ${fmt(end)}';
+  }
+
+  Future<void> _onExportPressed(
+    WidgetRef ref,
+    _ExportType type,
+    AnalyticsFilter filter, {
+    void Function(String? savedPath, String? message)? onDone,
+  }) async {
+    // Gather data using providers (filtered) - no UI access here
+    final attempts = await ref.read(filteredAttemptsProvider.future);
+    final kpis = await ref.read(kpisMapProvider.future);
+    final perQuiz = await ref.read(perQuizStatsMapProvider.future);
+
+    if (attempts.isEmpty) {
+      onDone?.call(null, 'No data to export for current filters');
+      return;
+    }
+
+    // Build metadata for JSON and for filename
+    final ts = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now().toUtc());
+    final filename = 'analytics_export_$ts.${type == _ExportType.csv ? 'csv' : 'json'}';
+
+    // Serialize
+    String content;
+    if (type == _ExportType.csv) {
+      content = analyticsToCsv(attempts: attempts, kpis: kpis, perQuiz: perQuiz);
+    } else {
+      content = analyticsToJson(
+        attempts: attempts,
+        kpis: kpis,
+        perQuiz: perQuiz,
+        filters: {
+          'start': filter.start.toIso8601String(),
+          'end': filter.end.toIso8601String(),
+          'category': filter.category,
+        },
+      );
+    }
+
+    // Choose directory: try system temp, fallback to current dir or user dir
+    final dir = Directory.systemTemp.existsSync()
+        ? Directory.systemTemp
+        : (Directory.current.existsSync() ? Directory.current : Directory('/'));
+    final file = File('${dir.path}/$filename');
+
+    await file.writeAsString(content);
+
+    onDone?.call(file.path, null);
+  }
+
+  void _showSnack(BuildContext context, String message) {
+    final cs = Theme.of(context).colorScheme;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: cs.surface,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: cs.outline),
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
 
