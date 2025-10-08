@@ -49,7 +49,12 @@ class AppTabsShell extends StatefulWidget {
 class _AppTabsShellState extends State<AppTabsShell> {
   int _currentIndex = 0;
 
-  static const _tabTitles = <String>['Lessons', 'Quizzes', 'Dashboard', 'Profile'];
+  static const _tabTitles = <String>[
+    'Lessons',
+    'Quizzes',
+    'Dashboard',
+    'Profile',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -60,13 +65,18 @@ class _AppTabsShellState extends State<AppTabsShell> {
       ProfileScreen(),
     ];
 
+    final body = SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: IndexedStack(index: _currentIndex, children: pages),
+      ),
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_tabTitles[_currentIndex]),
       ),
-      body: SafeArea(
-        child: IndexedStack(index: _currentIndex, children: pages),
-      ),
+      body: body,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
@@ -82,8 +92,8 @@ class _AppTabsShellState extends State<AppTabsShell> {
             label: 'Quizzes',
           ),
           NavigationDestination(
-            icon: Icon(Icons.insights_outlined),
-            selectedIcon: Icon(Icons.insights),
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
           NavigationDestination(

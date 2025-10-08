@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// PUBLIC_INTERFACE
 class SampleCard extends StatelessWidget {
-  /** Simple reusable card following Ocean Professional style. */
+  /// Simple reusable card following Ocean Professional style.
   const SampleCard({
     super.key,
     required this.title,

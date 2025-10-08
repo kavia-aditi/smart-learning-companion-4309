@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:micro_learning_ai_tutor_frontend/ui/widgets/gradient_header.dart';
+import 'package:micro_learning_ai_tutor_frontend/ui/widgets/ocean_card.dart';
+import 'package:micro_learning_ai_tutor_frontend/ui/widgets/section_title.dart';
 
 /// PUBLIC_INTERFACE
 class DashboardScreen extends StatelessWidget {
-  /** Base screen for Dashboard tab. Shows progress summary placeholder. */
+  /// Base screen for Dashboard tab. Shows progress summary with gradient header and stats cards.
   const DashboardScreen({super.key});
 
   @override
@@ -10,25 +13,27 @@ class DashboardScreen extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
 
+    Widget statCard(IconData icon, String label, String value, Color color) {
+      return OceanCard.elevated(
+        leading: CircleAvatar(
+          radius: 20,
+          backgroundColor: color.withAlpha(26),
+          child: Icon(icon, color: color),
+        ),
+        title: label,
+        subtitle: value,
+        onTap: () {},
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        Text('Your recent progress and insights.', style: t.bodyMedium),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(10),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(16),
+        const SectionTitle('Overview'),
+        const SizedBox(height: 8),
+
+        // Gradient progress header
+        GradientHeader(
           child: Row(
             children: [
               Icon(Icons.insights, color: cs.primary),
@@ -56,6 +61,14 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+
+        const SectionTitle('Stats'),
+        const SizedBox(height: 8),
+
+        statCard(Icons.timer_outlined, 'Time learned this week', '42 min', cs.tertiary),
+        const SizedBox(height: 12),
+        statCard(Icons.check_circle_outline, 'Quizzes passed', '8 of 10', const Color(0xFF10B981)),
       ],
     );
   }
